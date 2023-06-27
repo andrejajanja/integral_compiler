@@ -47,7 +47,7 @@ pub fn print_help(){
     Made by Andreja Janković; Year 2023; E-mail: andrejajanja@gmail.com\n\n");    
 }
 
-pub fn _parse_inputs(function: &mut String, start: &mut f64, end: &mut f64, steps: &mut u64 ){
+pub fn parse_inputs(function: &mut String, start: &mut f64, end: &mut f64, steps: &mut u64 ){
 
     println!("f(x) = ");
     stdin().read_line(function).unwrap_or_else(|err| {
@@ -97,41 +97,164 @@ pub fn _parse_inputs(function: &mut String, start: &mut f64, end: &mut f64, step
     };
 }
 
-
-pub enum OpType {
+#[derive(Debug, Copy, Clone)]
+pub enum Func {
     Sin,    // sin(f(x))
     Cos,    // cos(f(x))
     Tg,     // tg(f(x))
     Ctg,    // ctg(f(x))
     Ln,     // ln(f(x))
     Exp,    // e^(f(x))
-    Const,  // C*f(x) where CeR
+    Pow,    // C^(f(x)) CeR
+    Sqrt,   // sqrt(f(x))
+    Const,  // C where CeR
     Arctg,  // arctg(f(x))
     Arcctg, // arcctg(f(x))
     Arcsin, // arcsin(f(x))
     Arccos, // arccos(f(x))
+    //These are the operation +, -, *, /
+    Add,
+    Sub,
+    Mul,
+    Div,
+    X, //if node is just an X
+    //None is used to mark the end of node tree branches
+    None
 }
 
-pub struct Monoid <'a> {
-    contents: &'a str,
-    op: OpType,    
+pub struct Node {
+    pub first: Option<Box<Node>>,
+    pub second: Option<Box<Node>>,
+    pub op: Func,
 }
 
-impl <'a> Monoid <'a> {
-    pub fn new(function: &'a str) -> Monoid<'a>{
-        Monoid {contents: function, op: OpType::Sin}
+impl Node {
+    pub fn new() -> Node{
+        Node{first: None, second: None, op: Func::None}
     }
 
-    //you need to finnish this
-    pub fn _parse_to_assebly(&self){
-
-    }
+    pub fn _parse_to_assebly(&self) {}
 }
 
-pub fn _parse_function<'a, 'b>(function: &'a mut String, monoid_list: &'b Vec<Monoid<'a>> ){
-    if function == "x" {
-        return;
+pub fn extract_lower_level(fun: &mut String) -> Vec<String>{
+    struct Rem {
+        start: usize,
+        end: usize,
     }
 
-    //add this part here
+    let mut pos: usize = 0;
+    let mut depth: u8 = 0;
+    let mut remove_list = Vec::<Rem>::new();
+    for (i, c) in fun.chars().enumerate(){
+        if c == '(' {
+            if depth == 0{
+                pos = i;
+            }
+            
+            depth += 1; //it doesn't have an increment operator?
+        }
+
+        if c == ')' {
+            depth -= 1;
+
+            if depth == 0{
+                remove_list.push(Rem{start: pos, end: i});
+            }
+        }
+    }
+    
+    let mut lower_level = Vec::<String>::new();
+    pos = 0;
+    for remove in &remove_list {
+        let pom = fun.clone(); 
+        lower_level.push(pom[(remove.start - pos + 1)..(remove.end - pos)].to_string());
+
+        fun.replace_range((remove.start - pos)..(remove.end - pos + 1), "");
+        pos += remove.end - remove.start + 1;
+    }
+
+    lower_level
+}
+
+pub fn generate_tree_from_string(function: &mut String, node: &mut Node){
+    let lower_level = extract_lower_level(function);
+
+    //this is for spliting by + and -
+    let mut first_tier_chunks = Vec::<String>::new();
+    let mut first_tier_ops = Vec::<Func>::new();
+
+    //splitting by first tier operations
+    let mut first: i16 = -1;
+    let mut second: usize = 0;
+    for (i, c) in function.chars().enumerate() {
+        if c == '+' || c == '-' {
+
+            match c {
+                '+' => {first_tier_ops.push(Func::Add);}
+                '-' => {first_tier_ops.push(Func::Sub);}
+                _ => {}
+            }
+
+            if second != 0 {
+                first = second as i16;
+            }
+            second = i;
+            first_tier_chunks.push(function[(first+1) as usize..second].to_string())
+        }
+    }
+    
+    if second == 0 {
+        first_tier_chunks.push(function.clone());
+    }else{
+        first_tier_chunks.push(function[second+1..].to_string());
+    }
+
+    println!("First tier operations in level:");
+    println!("\n{:#?}", first_tier_chunks);
+    println!("\n{:#?}", first_tier_ops);
+
+    if first_tier_ops.len() == 1 {
+        //singular assingment
+        node.op = first_tier_ops[0];
+    }else{
+        //staircase assingment with nodes
+        
+    }
+
+    //spliting by second order operation, for every first tier chunk
+    for (i, chunk) in first_tier_chunks.iter().enumerate(){
+        //this is for splitting by * and /
+        let mut second_tier_chunks = Vec::<String>::new();
+        let mut second_tier_ops = Vec::<Func>::new();
+        first = -1;
+        second = 0;
+        for (i, c) in chunk.chars().enumerate() {
+            if c == '*' || c == '/' {
+                match c {
+                    '*' => {second_tier_ops.push(Func::Mul);}
+                    '/' => {second_tier_ops.push(Func::Div);}
+                    _ => {}
+                }
+    
+                if second != 0 {
+                    first = second as i16;
+                }
+                second = i;
+                second_tier_chunks.push(chunk[(first+1) as usize..second].to_string())
+            }
+        }
+        if second == 0 {
+            second_tier_chunks.push(chunk.clone());
+        }else{
+            second_tier_chunks.push(chunk[second+1..].to_string());
+        }
+
+        println!("Second tier operations for chunk number: {i}");
+        println!("\n{:#?}", second_tier_chunks);
+        println!("{:#?}\n", second_tier_ops);
+
+        //you need to take into account the staircase thing here
+    }
+
+    println!("\n{:#?}", lower_level);
 }

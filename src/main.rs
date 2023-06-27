@@ -1,57 +1,43 @@
-use std::{
-    env,
-    process::exit,
-};
+// use std::{
+//     env,
+//     process::exit,
+// };
 use integral_aprox::*;
 
-struct Rem {
-    start: usize,
-    end: usize,
+//features to implement:
+//checking weather the borders of integral are in the domains of a function
+
+
+// toy main:
+fn main(){
+    //let mut function = String::from("sin(x*7)*e^(x+1)-tg(x-8)+cos(x)");
+    //let mut function = String::from("sin(x*7)*e^(x+1)+cos(x)tg(x)");
+    let mut function = String::from("x+cos(x)");
+
+    let mut tree = Node::new();
+    generate_tree_from_string(&mut function, &mut tree);
+
+    println!("{:?}", tree.op);
 }
 
-fn remove_lower_level(fun: &mut String){
-    let mut pos: usize = 0;
-    let mut remove_list = Vec::<Rem>::new();
-    for (i, c) in fun.chars().enumerate(){
-        if c == '(' {
-            pos = i;
-        }
+// whole main
+// fn main() {
+//     let provided: Vec<String> = env::args().collect();
+//     if provided.len() != 1 {
+//         if provided[1] == "--help"{
+//             print_help();
+//             exit(0);
+//         }
+//     }
 
-        if c == ')' {
-            remove_list.push(Rem{start: pos, end: i})
-        }
-    }
+//     let mut function = String::new();
+//     let mut start: f64;
+//     let mut end: f64;
+//     let mut steps: u64;
+
+//     parse_inputs(&mut function, &mut start, &mut end, &mut steps);
+//     function = function.replace(" ", "");
+
     
-    pos = 0;
-    for remove in &remove_list {
-        fun.replace_range((remove.start - pos)..(remove.end - pos + 1), "");
-        pos += remove.end - remove.start + 1;
-    }
-}
-
-fn main() {
-    let provided: Vec<String> = env::args().collect();
-    if provided.len() != 1 {
-        if provided[1] == "--help"{
-            print_help();
-            exit(0);
-        }
-    }
-
-    let mut function = String::from("sin(x)*e^(x-1)-tg(x)/ln(x)");
-    // let mut start: f64 = 0.5;
-    // let mut end: f64 = 1.0;
-    // let mut steps: u64 = 100;
-
-    remove_lower_level(&mut function);
-
-    println!("\n\n{function}\n\n");
-
-    //parse_inputs(&mut function, &mut start, &mut end, &mut steps);
-    //function = function.replace(" ", "");
-
-    // sin(x) * e^(x+7) - tg(x) / ln(x*9)
-    //println!("'{}'", function);
-    //print!("\n\n  {}\n\n ∫ 3*x + 7 dx  =  89.0\t\t(With {steps} steps)\n\n{}\n\n", end, start);
-    //let rez = integral(0.0, 3.14, 100000, &fun);
-}
+//     //print!("\n\n  {}\n\n ∫ 3*x + 7 dx  =  89.0\t\t(With {steps} steps)\n\n{}\n\n", end, start);
+// }
