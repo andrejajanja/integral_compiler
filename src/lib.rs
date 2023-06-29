@@ -216,7 +216,6 @@ fn split_by_ops(function: &String, op1: char, op2: char, mk1: Func, mk2: Func) -
     (tier_chunks, tier_ops)
 }
 
-
 fn parse_and_fill(pom_node: &mut Node, pom_string: &str) {
     if pom_string == "x"{
         pom_node.first = None;
@@ -258,25 +257,83 @@ fn parse_and_fill(pom_node: &mut Node, pom_string: &str) {
         }
     }
 }
-//println!("First tier operations:\n{:#?}\n\n{:#?}", first_tier_ops, first_tier_chunks);
-//println!("Second tier operations for chunk number: {i}\n{:#?}\n\n{:#?}", second_tier_ops, second_tier_chunks);
 
+fn _generate_stairs(chunks: &Vec<String>, ops: &Vec<Func>, lower_level: Option<&Vec<String>>) -> Node{
+    let pom = Node::new();
 
-fn _fill_stairs(_chunks: Vec<String>, _ops: Vec<Func>, ) -> Node{
+    if chunks.len() == 1 {
 
-    Node::new()
+    }else if ops.len() == 1 {
+
+    }
+
+    match lower_level {
+        None => {
+            pom
+        }
+        Some(_arr) => {
+            pom
+        }
+    }
 }
 
+//println!("First tier operations:\n{:#?}\n\n{:#?}", first_tier_ops, first_tier_chunks);
 pub fn generate_tree_from_string(function: &mut String) -> Node{
     let mut lower_level = extract_lower_level(function);
-    let mut tracker: u8 = 0; //for lower levels
+    let mut tracker: u8 = 0; //for lower level, remove this variable in favour of recursion
 
     let mut sub_node = Node::new();
     //this is for spliting by + and - <= First tier operations
     let (first_tier_chunks, first_tier_ops) = split_by_ops(function, '+', '-', Func::Add, Func::Sub);
 
-    //ending part of the recursion
-    if first_tier_ops.len() == 0 {
+    if first_tier_chunks.len() != 1 {
+        //case if there are any first tier operation in the function string
+        sub_node.op = first_tier_ops[0];
+        if first_tier_chunks.len() > 2 {
+            //sub_node.second = fill_stairs
+            println!("Stairs unfold");
+            //stair split
+        }else{
+            //spliting by second order operation, for every first tier chunk
+            //maybe unfold this for, this can make it faster
+            for (i, chunk) in first_tier_chunks.iter().enumerate(){
+                //this is for splitting by * and / <= Second tier operations
+                let (second_tier_chunks, second_tier_ops) = split_by_ops(chunk, '*', '/', Func::Mul, Func::Div);
+                //println!("Second tier operations for chunk number: {i}\n{:#?}\n\n{:#?}", second_tier_ops, second_tier_chunks);
+                let mut pom_node: Node = Node::new();
+                if second_tier_ops.len() == 0{
+                    parse_and_fill(&mut pom_node, second_tier_chunks[0].as_str());
+                }else{
+                    println!("staircase assignment for second order operations");
+                    //staircase assignment for second order operations
+                }
+        
+                if i == 0 {
+                    match pom_node.op {
+                        Func::X | Func::Const => {}
+                        _ => {
+                            pom_node.first = Some(Box::new(generate_tree_from_string(&mut lower_level[tracker as usize])));                    
+                            tracker+=1;
+                        }
+                    }
+                    sub_node.first = Some(Box::new(pom_node));
+                }else{
+                    match pom_node.op {
+                        Func::X | Func::Const => {}
+                        _ => {
+                            pom_node.first = Some(Box::new(generate_tree_from_string(&mut lower_level[tracker as usize])));
+                            tracker+=1;
+                        }
+                    }
+                    sub_node.second = Some(Box::new(pom_node));   
+                }
+            }
+        }
+    }else{
+        //There aren't any 1st tier ops in funcrion, checking for 2nd tier ops and running a tree for them
+
+
+        //There aren't any 2nd tier ops in funcrion, then checks for the single op
         if lower_level.len() == 0 {
             parse_and_fill(&mut sub_node, function);
         }else{
@@ -304,49 +361,6 @@ pub fn generate_tree_from_string(function: &mut String) -> Node{
         }
         return sub_node;
     }
-
-    sub_node.op = first_tier_ops[0];
-    let _stair_first_order: Option<&Node> = None; //this reference keeps where on the stairs is the algorithm
-    //let mut stair_second_order;
-
-    //spliting by second order operation, for every first tier chunk
-    for (i, chunk) in first_tier_chunks.iter().enumerate(){
-        //this is for splitting by * and / <= Second tier operations
-        let (second_tier_chunks, second_tier_ops) = split_by_ops(chunk, '*', '/', Func::Mul, Func::Div);
-        
-        let mut pom_node: Node = Node::new();
-        if second_tier_ops.len() == 0{
-            parse_and_fill(&mut pom_node, second_tier_chunks[0].as_str());
-        }else{
-            //staircase assignment for second order operations
-        }
-
-        if i == 0 {
-            match pom_node.op {
-                Func::X | Func::Const => {}
-                _ => {
-                    pom_node.first = Some(Box::new(generate_tree_from_string(&mut lower_level[tracker as usize])));                    
-                    tracker+=1;
-                }
-            }
-            sub_node.first = Some(Box::new(pom_node));
-        }else{
-            if first_tier_ops.len() == 1{
-                match pom_node.op {
-                    Func::X | Func::Const => {}
-                    _ => {
-                        pom_node.first = Some(Box::new(generate_tree_from_string(&mut lower_level[tracker as usize])));
-                        tracker+=1;
-                    }
-                }
-                sub_node.second = Some(Box::new(pom_node));
-            }else{
-                println!("THIS HAS BEEN TRIGGERED");
-                //staircase assignment for first order operations
-            }       
-        }
-    }
-
     //println!("\nLower level:\n{:#?}\n\n", lower_level);
     sub_node
 }

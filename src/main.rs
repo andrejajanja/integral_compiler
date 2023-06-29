@@ -6,6 +6,9 @@
 //use std::time::Instant;
 use integral_aprox::*;
 
+
+//potential bugs: sin(x)^f(x), implement a power operation as a 3rd tier operation maybe
+
 //features to implement:
 //checking weather the borders of integral are in the domains of a function
 
@@ -14,7 +17,7 @@ use integral_aprox::*;
 fn main(){
     //let mut function = String::from("sin(x*7)*e^(x+1)-tg(x-8)+cos(x)");
     //let mut function = String::from("sin(x*7)*e^(x+1)+cos(x)tg(x)");
-    let mut function = String::from("ln(x)+cos(x)+tg(x)");
+    let mut function = String::from("sin(x)+cos(x)+x");
 
     let tree = generate_tree_from_string(&mut function);
     print_tree(&tree, 0, '\n');
