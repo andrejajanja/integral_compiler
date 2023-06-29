@@ -3,6 +3,18 @@ use std::{
     io::stdin,
 };
 
+#[macro_export()]
+macro_rules! measure_time {
+    ($code:block) => {{
+        let start = Instant::now();
+        let result = $code;
+        let duration = start.elapsed();
+
+        println!("Time spent: {:?}", duration);
+        result
+    }};
+}
+
 fn _integral(a: f64, b: f64, steps: i64, fun: fn(f64) -> f64) -> f64 {
     if a>b{ 
         panic!("a value can't be bigger than b, see --help for instructions");
@@ -54,7 +66,7 @@ pub fn parse_inputs(function: &mut String, start: &mut f64, end: &mut f64, steps
         println!("\n\nError while taking a function input: {err}\n\n");
         exit(0);
     });
-    function.pop();
+    function.pop(); //remove the newline character here
 
     let mut parameters: String = String::new();
     print!("\nrange start, range end, step count: \n");
@@ -117,23 +129,21 @@ pub enum Func {
     Sub,
     Mul,
     Div,
-    X, //if node is just an X
-    //None is used to mark the end of node tree branches
+    X, //if node is just x
     None
 }
 
-pub struct Node {
+pub struct Node{
     pub first: Option<Box<Node>>,
     pub second: Option<Box<Node>>,
     pub op: Func,
+    pub c: Option<f64>, //if type op = Func::Const
 }
 
-impl Node {
+impl Node{
     pub fn new() -> Node{
-        Node{first: None, second: None, op: Func::None}
+        Node{first: None, second: None, op: Func::None, c: None}
     }
-
-    pub fn _parse_to_assebly(&self) {}
 }
 
 pub fn extract_lower_level(fun: &mut String) -> Vec<String>{
@@ -150,10 +160,8 @@ pub fn extract_lower_level(fun: &mut String) -> Vec<String>{
             if depth == 0{
                 pos = i;
             }
-            
-            depth += 1; //it doesn't have an increment operator?
+            depth += 1;
         }
-
         if c == ')' {
             depth -= 1;
 
@@ -162,13 +170,13 @@ pub fn extract_lower_level(fun: &mut String) -> Vec<String>{
             }
         }
     }
-    
+
     let mut lower_level = Vec::<String>::new();
     pos = 0;
+
     for remove in &remove_list {
         let pom = fun.clone(); 
         lower_level.push(pom[(remove.start - pos + 1)..(remove.end - pos)].to_string());
-
         fun.replace_range((remove.start - pos)..(remove.end - pos + 1), "");
         pos += remove.end - remove.start + 1;
     }
@@ -176,85 +184,201 @@ pub fn extract_lower_level(fun: &mut String) -> Vec<String>{
     lower_level
 }
 
-pub fn generate_tree_from_string(function: &mut String, node: &mut Node){
-    let lower_level = extract_lower_level(function);
+fn split_by_ops(function: &String, op1: char, op2: char, mk1: Func, mk2: Func) -> (Vec<String>, Vec<Func>) {
+    let mut tier_chunks = Vec::<String>::new();
+    let mut tier_ops = Vec::<Func>::new();
 
-    //this is for spliting by + and -
-    let mut first_tier_chunks = Vec::<String>::new();
-    let mut first_tier_ops = Vec::<Func>::new();
-
-    //splitting by first tier operations
     let mut first: i16 = -1;
     let mut second: usize = 0;
     for (i, c) in function.chars().enumerate() {
-        if c == '+' || c == '-' {
+        if c == op1 || c == op2 {
 
-            match c {
-                '+' => {first_tier_ops.push(Func::Add);}
-                '-' => {first_tier_ops.push(Func::Sub);}
-                _ => {}
+            if c == op1 {
+                tier_ops.push(mk1);
+            }else{
+                tier_ops.push(mk2);
             }
 
             if second != 0 {
                 first = second as i16;
             }
             second = i;
-            first_tier_chunks.push(function[(first+1) as usize..second].to_string())
+            tier_chunks.push(function[(first+1) as usize..second].to_string())
         }
     }
     
     if second == 0 {
-        first_tier_chunks.push(function.clone());
+        tier_chunks.push(function.clone());
     }else{
-        first_tier_chunks.push(function[second+1..].to_string());
+        tier_chunks.push(function[second+1..].to_string());
     }
 
-    println!("First tier operations in level:");
-    println!("\n{:#?}", first_tier_chunks);
-    println!("\n{:#?}", first_tier_ops);
+    (tier_chunks, tier_ops)
+}
 
-    if first_tier_ops.len() == 1 {
-        //singular assingment
-        node.op = first_tier_ops[0];
+
+fn parse_and_fill(pom_node: &mut Node, pom_string: &str) {
+    if pom_string == "x"{
+        pom_node.first = None;
+        pom_node.second = None;
+        pom_node.op = Func::X;
+        pom_node.c = None;
+
     }else{
-        //staircase assingment with nodes
-        
+        match pom_string.parse::<f64>(){
+            Ok(c) => {
+                pom_node.first = None;
+                pom_node.second = None;
+                pom_node.op = Func::Const;
+                pom_node.c = Some(c);
+            }
+            Err(_e) => {
+                pom_node.first = None;
+                pom_node.second = None;
+                pom_node.c = None;
+
+                match pom_string {
+                    "sin" => {pom_node.op = Func::Sin;}
+                    "cos" => {pom_node.op = Func::Cos;}
+                    "tg" => {pom_node.op = Func::Tg;}
+                    "ctg" => {pom_node.op = Func::Ctg;}
+                    "sqrt" => {pom_node.op = Func::Sqrt;}
+                    "arctg" => {pom_node.op = Func::Arctg;}
+                    "arcctg" => {pom_node.op = Func::Arcctg;}
+                    "arcsin" => {pom_node.op = Func::Arcsin;}
+                    "arccos" => {pom_node.op = Func::Arccos;}
+                    "e^" => {pom_node.op = Func::Exp;}
+                    "ln" => {pom_node.op = Func::Ln;}
+                    _ => { 
+                        println!("\n\tError parsing the function part. Check for typos\n\tExact part that caused this error: '{}'\n", pom_string);
+                        exit(0);
+                    }
+                }
+            }
+        }
     }
+}
+//println!("First tier operations:\n{:#?}\n\n{:#?}", first_tier_ops, first_tier_chunks);
+//println!("Second tier operations for chunk number: {i}\n{:#?}\n\n{:#?}", second_tier_ops, second_tier_chunks);
+
+
+fn _fill_stairs(_chunks: Vec<String>, _ops: Vec<Func>, ) -> Node{
+
+    Node::new()
+}
+
+pub fn generate_tree_from_string(function: &mut String) -> Node{
+    let mut lower_level = extract_lower_level(function);
+    let mut tracker: u8 = 0; //for lower levels
+
+    let mut sub_node = Node::new();
+    //this is for spliting by + and - <= First tier operations
+    let (first_tier_chunks, first_tier_ops) = split_by_ops(function, '+', '-', Func::Add, Func::Sub);
+
+    //ending part of the recursion
+    if first_tier_ops.len() == 0 {
+        if lower_level.len() == 0 {
+            parse_and_fill(&mut sub_node, function);
+        }else{
+            sub_node.first = None;
+            sub_node.second = None;
+            sub_node.c = None;
+            match first_tier_chunks[0].as_str() {
+                "sin" => {sub_node.op = Func::Sin;}
+                "cos" => {sub_node.op = Func::Cos;}
+                "tg" => {sub_node.op = Func::Tg;}
+                "ctg" => {sub_node.op = Func::Ctg;}
+                "sqrt" => {sub_node.op = Func::Sqrt;}
+                "arctg" => {sub_node.op = Func::Arctg;}
+                "arcctg" => {sub_node.op = Func::Arcctg;}
+                "arcsin" => {sub_node.op = Func::Arcsin;}
+                "arccos" => {sub_node.op = Func::Arccos;}
+                "e^" => {sub_node.op = Func::Exp;}
+                "ln" => {sub_node.op = Func::Ln;}
+                _ => { 
+                    println!("\n\tError parsing the function part. Check for typos\n\tExact part that caused this error: '{}'\n", first_tier_chunks[0]);
+                    exit(0);
+                }
+            }
+            sub_node.first = Some(Box::new(generate_tree_from_string(&mut lower_level[0])));
+        }
+        return sub_node;
+    }
+
+    sub_node.op = first_tier_ops[0];
+    let _stair_first_order: Option<&Node> = None; //this reference keeps where on the stairs is the algorithm
+    //let mut stair_second_order;
 
     //spliting by second order operation, for every first tier chunk
     for (i, chunk) in first_tier_chunks.iter().enumerate(){
-        //this is for splitting by * and /
-        let mut second_tier_chunks = Vec::<String>::new();
-        let mut second_tier_ops = Vec::<Func>::new();
-        first = -1;
-        second = 0;
-        for (i, c) in chunk.chars().enumerate() {
-            if c == '*' || c == '/' {
-                match c {
-                    '*' => {second_tier_ops.push(Func::Mul);}
-                    '/' => {second_tier_ops.push(Func::Div);}
-                    _ => {}
-                }
-    
-                if second != 0 {
-                    first = second as i16;
-                }
-                second = i;
-                second_tier_chunks.push(chunk[(first+1) as usize..second].to_string())
-            }
-        }
-        if second == 0 {
-            second_tier_chunks.push(chunk.clone());
+        //this is for splitting by * and / <= Second tier operations
+        let (second_tier_chunks, second_tier_ops) = split_by_ops(chunk, '*', '/', Func::Mul, Func::Div);
+        
+        let mut pom_node: Node = Node::new();
+        if second_tier_ops.len() == 0{
+            parse_and_fill(&mut pom_node, second_tier_chunks[0].as_str());
         }else{
-            second_tier_chunks.push(chunk[second+1..].to_string());
+            //staircase assignment for second order operations
         }
 
-        println!("Second tier operations for chunk number: {i}");
-        println!("\n{:#?}", second_tier_chunks);
-        println!("{:#?}\n", second_tier_ops);
-
-        //you need to take into account the staircase thing here
+        if i == 0 {
+            match pom_node.op {
+                Func::X | Func::Const => {}
+                _ => {
+                    pom_node.first = Some(Box::new(generate_tree_from_string(&mut lower_level[tracker as usize])));                    
+                    tracker+=1;
+                }
+            }
+            sub_node.first = Some(Box::new(pom_node));
+        }else{
+            if first_tier_ops.len() == 1{
+                match pom_node.op {
+                    Func::X | Func::Const => {}
+                    _ => {
+                        pom_node.first = Some(Box::new(generate_tree_from_string(&mut lower_level[tracker as usize])));
+                        tracker+=1;
+                    }
+                }
+                sub_node.second = Some(Box::new(pom_node));
+            }else{
+                println!("THIS HAS BEEN TRIGGERED");
+                //staircase assignment for first order operations
+            }       
+        }
     }
 
-    println!("\n{:#?}", lower_level);
+    //println!("\nLower level:\n{:#?}\n\n", lower_level);
+    sub_node
 }
+
+pub fn print_tree(node: &Node, tab: usize, addition: char){
+    match &node.op{
+        Func::Const => {
+            print!("{}| {:?} |{}", "\t".repeat(tab), node.c, addition);
+        }
+        _ => {
+            print!("{}| {:?} |{}", "\t".repeat(tab), node.op, addition);
+        }
+    }
+    match &node.first {
+        Some(no) => {
+
+            match &node.second {
+                None => {
+                    print!("\n");
+                }
+                Some(_x) => {}
+            }
+
+            print_tree(&no, tab + 1, '\n');
+        }
+        None => {}
+    }
+    match &node.second {
+        Some(no) => {
+            print_tree(&no, tab + 1, '\n');
+        }
+        None => {}
+    }
+}
+
