@@ -17,8 +17,8 @@ use integral_aprox::*;
 // toy main:
 fn main(){
     //let mut function = String::from("sin(x*7)*e^(x+1)-tg(x-8)/cos(x)");
-    let mut function = String::from("sin(x*7)*e^(x+1)+cos(x)*ln(x)");
-    //let mut function = String::from("3*x+7");
+    //let mut function = String::from("sin(x*7)*e^(x+1)+cos(x)*ln(x)");
+    let mut function = String::from("3*x+7");
 
     let start = Instant::now();
     let tree = generate_tree_from_string(&mut function);
