@@ -17,15 +17,16 @@ use integral_aprox::*;
 
 // toy main:
 fn main(){
-    let mut function = String::from("sin(x*7)*e^(x+1)-tg(x-8)/cos(x)");
+    //let mut function = String::from("sin(x*7)*e^(x+1)-tg(x-8)/cos(x)");
     //let mut function = String::from("sin(x*7)*e^(x+1)+cos(x)*tg(x)");
-    //let mut function = String::from("3*x+sin(x+7*tg(x))");
+    let mut function = String::from("3*x+7");
 
-    measure_time!({
-        let tree = generate_tree_from_string(&mut function);
-        print_tree(&tree, 0, '\n');
-        println!("");
-    });
+    let start = Instant::now();
+    let tree = generate_tree_from_string(&mut function);
+    let duration = start.elapsed();
+
+    print_tree(&tree, 0, '\n');
+    println!("Time spent: {:?}", duration);
     //measure_time!({});
 }
 
