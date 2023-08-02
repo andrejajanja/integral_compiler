@@ -2,10 +2,8 @@
 //     env,
 //     process::exit,
 // };
-
 use std::time::Instant;
 use integral_aprox::*;
-
 
 //potential bugs:
 // - sin(x)^f(x), implement a power operation as a 3rd tier operation maybe
@@ -14,12 +12,13 @@ use integral_aprox::*;
 // - checking weather the borders of integral are in the domains of a function
 // - highlight the part of the function string that has typoes
 // - remove all spaces and make all letters lowercase
+// - add variable folding optimization feature
 
 // toy main:
 fn main(){
     //let mut function = String::from("sin(x*7)*e^(x+1)-tg(x-8)/cos(x)");
-    //let mut function = String::from("sin(x*7)*e^(x+1)+cos(x)*tg(x)");
-    let mut function = String::from("3*x+7");
+    let mut function = String::from("sin(x*7)*e^(x+1)+cos(x)*ln(x)");
+    //let mut function = String::from("3*x+7");
 
     let start = Instant::now();
     let tree = generate_tree_from_string(&mut function);
@@ -27,6 +26,8 @@ fn main(){
 
     print_tree(&tree, 0, '\n');
     println!("Time spent: {:?}", duration);
+
+    generate_ir(&tree);
     //measure_time!({});
 }
 
