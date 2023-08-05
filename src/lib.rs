@@ -444,23 +444,34 @@ fn compile_tree(node: &Node, var_num: &mut i16) -> Subseq {
     let mut addr_s: i16 = 0; //second
     let mut first: String = String::from("");
     let mut second: String = String::from("");
+    let mut helper_rez: Subseq;
 
     match &node.first {
         Some(no) => {
-            *var_num = *var_num + 1;
-            addr_f = *var_num;
-            //first += compile_tree(no, var_num);
+            *var_num += 1;
+            helper_rez = compile_tree(no, var_num);
+            first = helper_rez.code;
+            addr_f = helper_rez.raddr;
         },
         None => {},
     }
 
     match &node.second {
         Some(no) => {
-            *var_num = *var_num + 1;
-            addr_s = *var_num;
-            //second += compile_tree(no, var_num).as_str();
+            *var_num += 1;
+            helper_rez = compile_tree(no, var_num);
+            second = helper_rez.code;
+            addr_s = helper_rez.raddr;
         },
         None => {},
+    }
+
+    //adding code from former branches to this branch
+    if addr_f > 0 {
+        rep += first.as_str();
+    }
+    if addr_s > 0 {
+        rep += second.as_str();    
     }
 
     match &node.op {
@@ -475,6 +486,7 @@ fn compile_tree(node: &Node, var_num: &mut i16) -> Subseq {
         Func::Const => {
             match node.c {
                 Some(c) => {
+                    //reformat this to be in order with how LLVM recognizes real numbers
                     return Subseq::new(format!("{:.6e}", c), -1);
                 },
                 None => {
@@ -487,14 +499,75 @@ fn compile_tree(node: &Node, var_num: &mut i16) -> Subseq {
         Func::Arcsin => todo!(),
         Func::Arccos => todo!(),
         Func::Add => {
-            rep += format!("%{} = fadd double %{}, %{}\n", *var_num, addr_f, addr_s).as_str();
+            let help_f: String;
+            let help_s: String;
+
+            if addr_f == -1 {
+                help_f = first;
+            }else{
+                help_f = format!("%{}", addr_f);
+            }
+
+            if addr_s == -1 {
+                help_s = second;
+            }else{
+                help_s = format!("%{}", addr_s);
+            }
+
+            rep += format!("%{} = fadd double {}, {}\n", *var_num, help_f, help_s).as_str();
+            //check here if last adress is negative number so it just adds a number emediately
+            
+            return Subseq::new(rep, *var_num);
         },
-        Func::Sub => todo!(),
-        Func::Mul => {rep += "fmul double";},
+        Func::Sub => {
+            let help_f: String;
+            let help_s: String;
+
+            if addr_f == -1 {
+                help_f = first;
+            }else{
+                help_f = format!("%{}", addr_f);
+            }
+
+            if addr_s == -1 {
+                help_s = second;
+            }else{
+                help_s = format!("%{}", addr_s);
+            }
+
+            rep += format!("%{} = fsub double {}, {}\n", *var_num, help_f, help_s).as_str();
+            return Subseq::new(rep, *var_num);
+        },
+        Func::Mul => {
+            let help_f: String;
+            let help_s: String;
+
+            if addr_f == -1 {
+                help_f = first;
+            }else if addr_f == -2{
+                help_f = String::from("%2");
+            }else{
+                help_f = format!("%{}", addr_f);
+            }
+
+            if addr_s == -1 {
+                help_s = second;
+            }else if addr_s == -2{
+                help_s = String::from("%2");
+            }else{
+                help_s = format!("%{}", addr_s);
+            }
+
+            rep += format!("%{} = fmul double {}, {}\n", *var_num, help_f, help_s).as_str();
+            return Subseq::new(rep, *var_num);
+        },
         Func::Div => todo!(),
-        Func::X => {println!("Reached the X")},
+        Func::X => {
+            return Subseq::new("".to_string(), -2);
+        },
         _ => {
             println!("Failed to compile tree node, operation that caused the error");
+            exit(0);
         },
     }
 }
@@ -504,7 +577,7 @@ pub fn generate_ir(node: &Node) {
 
     let mut var_num = 2;
 
-    let mut rep: String = String::from("%2 = alloca double\nstore double %0, ptr %2");
+    let mut rep: String = String::from("%2 = alloca double\nstore double %0, ptr %2\n");
     rep += compile_tree(node, &mut var_num).code.as_str();
 
     //maybe to implement this as a part of compile_tree function to reduce number of memory accesses
