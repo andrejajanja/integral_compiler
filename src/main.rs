@@ -1,34 +1,29 @@
-// use std::{
-//     env,
-//     process::exit,
-// };
+mod parts;
+mod stages;
 use std::time::Instant;
-use integral_aprox::*;
 
-//potential bugs:
-// - sin(x)^f(x), implement a power operation as a 3rd tier operation maybe
-
-//features to implement:
-// - checking weather the borders of integral are in the domains of a function
-// - highlight the part of the function string that has typoes
-// - remove all spaces and make all letters lowercase
-// - add variable folding optimization feature
+use parts::object_type_definitions::*;
+use stages::string_to_tree_iterative::*;
+use stages::string_to_tree_recursive::*;
 
 // toy main:
 fn main(){
-    //let mut function = String::from("sin(x*7)*e^(x+1)-tg(x-8)/cos(x)");
-    //let mut function = String::from("sin(x*7)*e^(x+1)+cos(x)*ln(x)");
-    let mut function = String::from("3*x+7");
 
-    let start = Instant::now();
-    let tree = generate_tree_from_string(&mut function);
-    let duration = start.elapsed();
+    let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)/cos(x)");
+    //let function = String::from("sin(x)*e^(x)+cos(x)*ln(x)");
+    //let function = String::from("3.56*x+7");
+    
+    // let start = Instant::now();
+    // let duration = start.elapsed();
+    // println!("Time spent: {:?}", duration);
+    let list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(&function));
+    
+    
 
-    print_tree(&tree, 0, '\n');
-    println!("Time spent: {:?}", duration);
-
-    generate_ir(&tree);
-    //measure_time!({});
+    for x in &list {
+        x.print_value();
+    }
+    //generate_ir(&tree);
 }
 
 // whole main
