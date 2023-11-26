@@ -181,6 +181,7 @@ fn op_priority(op: &Node) -> u8{
         Func::Div => {
             return 3;
         }
+        
 
         Func::Pow => {
             return 5;
