@@ -165,50 +165,76 @@ pub fn string_to_vec_of_node(function: &String) -> Vec<Node> {
     list
 }
 
-fn op_priority(op: &Node) -> u8{
+fn in_op_priority(op: &Node) -> u8{
     match op.op {
-        Func::Add => {
-            return 2;
-        }
-        Func::Sub => {
+        Func::Add | Func::Sub=> {
             return 2;
         }
 
-        Func::Mul => {
-            return 3;
-        }
-
-        Func::Div => {
+        Func::Mul | Func::Div => {
             return 3;
         }
         
-
         Func::Pow => {
             return 5;
         }
 
         Func::Ob => {
-            return 6;
+            return 9;
         }
 
         Func::Cb => {
             return 1;
         }
 
-        Func::Const => {
-            return 7;
+        Func::Const | Func::X=> {
+            return 11;
         }
 
-        Func::X => {
-            return 7;
-        }
-
+        //all other functions that behave as unary operators in this stack coversion
         _ => {
-            return 0;
+            return 8;
         }
     }
 }
 
+fn st_op_priority(op: &Node) -> u8{
+    match op.op {
+        Func::Add | Func::Sub=> {
+            return 2;
+        }
+
+        Func::Mul | Func::Div => {
+            return 3;
+        }
+        
+        Func::Pow => {
+            return 4;
+        }
+
+        Func::Ob => {
+            return 0;
+        }
+
+        Func::Cb => {
+            return 0;
+        }
+
+        _ => {
+            return 7;
+        }
+    }
+}
+
+fn vec_node_to_string(ve: &Vec<Node>) -> String{
+    let mut helper_string = String::new();
+
+    for x in ve {
+        helper_string += &(x.op.to_string() + " ");
+    }
+
+    helper_string
+}
 
 //Finnih this function, rest it easy https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Frti.etf.bg.ac.rs%2Frti%2Fri3sp%2Fmaterijali%2Fir2asp%2F04_StekRedovi.ppt&wdOrigin=BROWSELINK
 pub fn vec_infix_to_postfix(infix: Vec<Node>) -> Vec<Node>{
@@ -218,25 +244,73 @@ pub fn vec_infix_to_postfix(infix: Vec<Node>) -> Vec<Node>{
     let mut i: usize = 0;
 
     while i < infix.len() {
-        if op_priority(&infix[i]) == 7 {
-            postfix.push(infix[i]);
+        if in_op_priority(&infix[i]) == 11 {
+            postfix.push(infix[i].return_copy());
+            i+=1;
+            continue;
         }
 
+        let mut stack_top: Option<Node> = match stack.pop() {
+            Some(x) => {
+                Some(x.return_copy())
+            }
+            None => {
+                None
+            }
+        };
 
+        loop {
+            match stack_top {
+                Some(x) => {
+                    if in_op_priority(&infix[i]) < st_op_priority(&x) {                                                                                            
+                        postfix.push(x.return_copy());
+                        stack_top = stack.pop();          
+                    }else{
+                        stack.push(x.return_copy());
+                        break;
+                    }
+                }
+                None => {
+                    break;
+                }
+            }
+        }
+
+        if infix[i].op != Func::Cb {
+            stack.push(infix[i].return_copy());
+        }else{            
+            stack.pop();
+        }        
+        
+        i+=1;
+    }
+
+    loop {
+        let last_on_stack: Node = match stack.pop() {
+            Some(nod) => {
+                nod
+            }
+
+            None => {
+                break;
+            }
+        };
+
+        postfix.push(last_on_stack);
     }
 
 
     postfix
 }
 
-fn postfix_to_tree(list: &Vec<Node>) -> Node {
-    let pom = Node::new();
+// fn postfix_to_tree(list: &Vec<Node>) -> Node {
+//     let pom = Node::new();
 
-    pom
-}
+//     pom
+// }
 
-pub fn str_to_tree_iter(function: &mut String) -> Node{
-    let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));;    
-    let root: Node = postfix_to_tree(&mut list);
-    root
-}
+// pub fn str_to_tree_iter(function: &mut String) -> Node{
+//     let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));    
+//     let root: Node = postfix_to_tree(&mut list);
+//     root
+// }

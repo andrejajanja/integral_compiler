@@ -32,6 +32,34 @@ pub enum Func {
     None,   // end of the tree
 }
 
+impl ToString for Func {
+    fn to_string(&self) -> String {
+        match self{
+            Func::Add => String::from("+"),
+            Func::Sub => String::from("-"),
+            Func::Mul => String::from("*"),
+            Func::Div => String::from("/"),
+            Func::Pow => String::from("^"),
+            Func::X => String::from("x"),
+            Func::None => String::from("None"),
+            Func::Sin => String::from("sin"),
+            Func::Cos => String::from("cos"),
+            Func::Tg => String::from("tg"),
+            Func::Ctg => String::from("ctg"),
+            Func::Ln => String::from("ln"),
+            Func::Exp => String::from("e^"),
+            Func::Sqrt => String::from("sqrt"),
+            Func::Const => String::from("Const"),
+            Func::Atg => String::from("arctg"),
+            Func::Asin => String::from("arcsin"),
+            Func::Acos => String::from("arccos"),
+            Func::Actg => String::from("arcctg"),
+            Func::Ob => String::from("("),
+            Func::Cb => String::from(")")
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Node {
     pub first: Option<Box<Node>>,
@@ -68,6 +96,15 @@ impl Node {
         }else{
             print!("{:?} ", self.op);
         }        
+    }
+
+    pub fn return_copy(&self) -> Node {
+        Node {
+            first: None,
+            second: None,
+            op: self.op,
+            c: self.c,
+        }
     }
 
     //IMPLEMENT COPY TRAIT HERE
