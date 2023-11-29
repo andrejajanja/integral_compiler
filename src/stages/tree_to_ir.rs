@@ -84,11 +84,11 @@ fn compile_tree(node: &Node, var_num: &mut i16) -> Subseq {
     let mut rep: String = String::from(""); //IR representation
     let mut addr_f: i16 = 0; //first
     let mut addr_s: i16 = 0; //second
-    let mut first: String = String::from("");
-    let mut second: String = String::from("");
+    let _first: String = String::from("");
+    let _second: String = String::from("");
 
     match &node.first {
-        Some(no) => {
+        Some(_no) => {
             *var_num = *var_num + 1;
             addr_f = *var_num;
             //first += compile_tree(no, var_num);
@@ -97,7 +97,7 @@ fn compile_tree(node: &Node, var_num: &mut i16) -> Subseq {
     }
 
     match &node.second {
-        Some(no) => {
+        Some(_no) => {
             *var_num = *var_num + 1;
             addr_s = *var_num;
             //second += compile_tree(no, var_num).as_str();

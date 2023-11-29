@@ -226,13 +226,13 @@ fn st_op_priority(op: &Node) -> u8{
     }
 }
 
-fn vec_node_to_string(ve: &Vec<Node>) -> String{
+pub fn vec_node_to_string(ve: &Vec<Node>) -> String{
     let mut helper_string = String::new();
 
     for x in ve {
         helper_string += &(x.op.to_string() + " ");
     }
-
+    helper_string += "\n";
     helper_string
 }
 
@@ -298,19 +298,72 @@ pub fn vec_infix_to_postfix(infix: Vec<Node>) -> Vec<Node>{
 
         postfix.push(last_on_stack);
     }
-
-
     postfix
 }
 
-// fn postfix_to_tree(list: &Vec<Node>) -> Node {
-//     let pom = Node::new();
+fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
+    //check if it's more efficient to format this differently
+    let binary_ops = vec![Func::Add, Func::Sub, Func::Mul, Func::Div, Func::Pow];
+    let unary_ops = vec![Func::Sin,Func::Cos,Func::Tg,Func::Ctg,Func::Ln,Func::Exp,Func::Sqrt,Func::Atg,Func::Actg,Func::Asin,Func::Acos];
+    match list.len() {
+        0 => {
+            panic!("Tree can't be generated due to list having no elements");
+        }
 
-//     pom
-// }
+        1 => {
+            return list[0].return_copy();
+        }
 
-// pub fn str_to_tree_iter(function: &mut String) -> Node{
-//     let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));    
-//     let root: Node = postfix_to_tree(&mut list);
-//     root
-// }
+        2 => {
+            //check if this thing works proprely
+            list[1].first = Some(Box::new(list[0].return_copy()));
+            list.remove(0);
+        }
+
+        _ => {
+            let mut i = 2;
+            let mut prev1 = 1; 
+            let mut prev2 = 0;
+
+            if in_op_priority(&list[1]) == 8 {
+                list[1].first = Some(Box::new(list[0].return_copy()));
+                list.remove(0);
+            }
+
+            //check if this list can be folded between prev1 and prev2
+
+            while list.len() != 1 && i>list.len(){
+                if unary_ops.contains(&list[prev1].op){
+                    list[prev1].first = Some(Box::new(list[prev2].return_copy()));
+                    list.remove(prev2);
+
+                    if prev2 != 0 {
+                        prev2 -= 1;
+                    }
+                    continue;
+                }
+
+                if binary_ops.contains(&list[i].op) {
+                    list[i].first = Some(Box::new(list[prev1].return_copy()));
+                    list[i].second = Some(Box::new(list[prev2].return_copy()));
+                    list.remove(prev1);
+                    list.remove(prev2);
+                }
+
+
+                i+= 1;
+                prev1+=1;
+                prev2+=1;
+            }
+        }
+    }
+
+    list[0].return_copy()
+}
+
+pub fn str_to_tree_iter(function: &String) -> Node{
+    let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));    
+    println!("{}", vec_node_to_string(&list));
+    let root: Node = postfix_to_tree(&mut list);
+    root
+}

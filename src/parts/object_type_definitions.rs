@@ -10,7 +10,6 @@ pub enum Func {
     Ln,     // ln(f(x))
     Exp,    // e^(f(x))
     Sqrt,   // sqrt(f(x))
-    Const,  // C, CeR
     Atg,  // arctg(f(x))
     Actg, // arcctg(f(x))
     Asin, // arcsin(f(x))
@@ -29,6 +28,7 @@ pub enum Func {
 
     //auxilary
     X,      //function variable
+    Const,  // C, CeR
     None,   // end of the tree
 }
 
