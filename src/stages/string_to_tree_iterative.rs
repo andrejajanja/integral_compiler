@@ -2,6 +2,8 @@
 use std::process::exit;
 use crate::parts::object_type_definitions::*;
 
+use super::tree_to_ir::print_tree;
+
 fn try_parsing(chunk: &str) -> Option<Node> {
     match chunk.len() {
         1 => {
@@ -115,7 +117,7 @@ fn try_parsing(chunk: &str) -> Option<Node> {
     }
 }
 
-pub fn string_to_vec_of_node(function: &String) -> Vec<Node> {
+pub fn string_to_vec_of_node(function: &str) -> Vec<Node> {
     let mut list: Vec<Node> = Vec::<Node>::new();
 
     let mut i: usize = 0;
@@ -358,12 +360,13 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
         }
     }
 
+    print_tree(&list[0], 0, ' ');
+
     list[0].return_copy()
 }
 
-pub fn str_to_tree_iter(function: &String) -> Node{
+pub fn str_to_tree_iter(function: &str) -> Node{
     let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));    
-    println!("{}", vec_node_to_string(&list));
-    let root: Node = postfix_to_tree(&mut list);
+    let root = postfix_to_tree(&mut list);
     root
 }
