@@ -2,24 +2,23 @@ mod parts;
 mod stages;
 //use std::time::Instant;
 
-use parts::object_type_definitions::*;
 use stages::{string_to_tree_iterative::*, tree_to_ir::print_tree};
 //use stages::string_to_tree_recursive::*;
 
 // toy main:
 fn main(){
 
-    //let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)/cos(x)");
-    let function = String::from("sin(x)*e^(x)+cos(x)*ln(x)");
+    let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)/cos(x)");
+    //let function = String::from("sin(x)*e^(x)+cos(x)*ln(x)");
     //let function = String::from("sin(x)");
+    //let function = String::from("3*x+7");
     
     // let start = Instant::now();
     // let duration = start.elapsed();
     // println!("Time spent: {:?}", duration);
     
     let root = str_to_tree_iter(&function);
-    //println!("{:?}", root);
-    //print_tree(&root, 0, ' ');
+    print_tree(&root, 0, '\n');
     //generate_ir(&tree);
 }
 

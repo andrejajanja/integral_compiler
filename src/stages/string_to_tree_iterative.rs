@@ -238,7 +238,6 @@ pub fn vec_node_to_string(ve: &Vec<Node>) -> String{
     helper_string
 }
 
-//Finnih this function, rest it easy https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Frti.etf.bg.ac.rs%2Frti%2Fri3sp%2Fmaterijali%2Fir2asp%2F04_StekRedovi.ppt&wdOrigin=BROWSELINK
 pub fn vec_infix_to_postfix(infix: Vec<Node>) -> Vec<Node>{
     let mut postfix: Vec<Node> = Vec::<Node>::new();
     let mut stack: Vec<Node> = Vec::<Node>::new();
@@ -247,14 +246,14 @@ pub fn vec_infix_to_postfix(infix: Vec<Node>) -> Vec<Node>{
 
     while i < infix.len() {
         if in_op_priority(&infix[i]) == 11 {
-            postfix.push(infix[i].return_copy());
+            postfix.push(infix[i].clone());
             i+=1;
             continue;
         }
 
         let mut stack_top: Option<Node> = match stack.pop() {
             Some(x) => {
-                Some(x.return_copy())
+                Some(x.clone())
             }
             None => {
                 None
@@ -265,10 +264,10 @@ pub fn vec_infix_to_postfix(infix: Vec<Node>) -> Vec<Node>{
             match stack_top {
                 Some(x) => {
                     if in_op_priority(&infix[i]) < st_op_priority(&x) {                                                                                            
-                        postfix.push(x.return_copy());
+                        postfix.push(x.clone());
                         stack_top = stack.pop();          
                     }else{
-                        stack.push(x.return_copy());
+                        stack.push(x.clone());
                         break;
                     }
                 }
@@ -279,7 +278,7 @@ pub fn vec_infix_to_postfix(infix: Vec<Node>) -> Vec<Node>{
         }
 
         if infix[i].op != Func::Cb {
-            stack.push(infix[i].return_copy());
+            stack.push(infix[i].clone());
         }else{            
             stack.pop();
         }        
@@ -303,9 +302,8 @@ pub fn vec_infix_to_postfix(infix: Vec<Node>) -> Vec<Node>{
     postfix
 }
 
-fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
+fn postfix_to_tree_verbose(list: &mut Vec<Node>) -> Node {
     //check if it's more efficient to format this differently
-    let binary_ops = vec![Func::Add, Func::Sub, Func::Mul, Func::Div, Func::Pow];
     let unary_ops = vec![Func::Sin,Func::Cos,Func::Tg,Func::Ctg,Func::Ln,Func::Exp,Func::Sqrt,Func::Atg,Func::Actg,Func::Asin,Func::Acos];
     match list.len() {
         0 => {
@@ -313,58 +311,165 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
         }
 
         1 => {
-            return list[0].return_copy();
+            return list[0].clone();
         }
 
         2 => {
             //check if this thing works proprely
-            list[1].first = Some(Box::new(list[0].return_copy()));
+            list[1].first = Some(Box::new(list[0].clone()));
             list.remove(0);
         }
 
         _ => {
-            let mut i = 2;
-            let mut prev1 = 1; 
-            let mut prev2 = 0;
+            let mut second: usize = 2;
+            let mut first: usize = 1;
+            let mut zeroth: usize = 0;
+            let mut i: usize = 0;
 
-            if in_op_priority(&list[1]) == 8 {
-                list[1].first = Some(Box::new(list[0].return_copy()));
-                list.remove(0);
-            }
+            while list.len() > 2{ //this ensures that the queue is always longer than two elements
+                println!("-------------Passing, queue state - len: {}, zeroth {}", list.len(), zeroth);
+                for temp in &mut *list{
+                    print!("-> ");
+                    print_tree(temp, 0, '\n');
+                }
 
-            //check if this list can be folded between prev1 and prev2
-
-            while list.len() != 1 && i>list.len(){
-                if unary_ops.contains(&list[prev1].op){
-                    list[prev1].first = Some(Box::new(list[prev2].return_copy()));
-                    list.remove(prev2);
-
-                    if prev2 != 0 {
-                        prev2 -= 1;
-                    }
+                if unary_ops.contains(&list[first].op) && list[first].first.is_none(){
+                    list[first].first = Some(Box::new(list[zeroth].clone()));
+                    list.remove(zeroth);
+                    i+=1;
                     continue;
                 }
 
-                if binary_ops.contains(&list[i].op) {
-                    list[i].first = Some(Box::new(list[prev1].return_copy()));
-                    list[i].second = Some(Box::new(list[prev2].return_copy()));
-                    list.remove(prev1);
-                    list.remove(prev2);
+                if (list[second].op == Func::X || list[second].op == Func::Const) && zeroth == 0{
+                    zeroth+=1;
+                    first+=1;
+                    second+=1;
                 }
 
+                if zeroth == 1 && unary_ops.contains(&list[zeroth].op) && list[zeroth].first.is_none(){
+                    list[1].first = Some(Box::new(list[0].clone()));
+                    list.remove(0);
+                    i+=1;
+                    continue;
+                }
 
-                i+= 1;
-                prev1+=1;
-                prev2+=1;
+                if unary_ops.contains(&list[second].op){
+                    list[second].first = Some(Box::new(list[first].clone()));
+                    list.remove(first);
+                    i+=1;
+                    continue;
+                }
+                
+                list[second].first = Some(Box::new(list[first].clone()));
+                list[second].second = Some(Box::new(list[zeroth].clone()));
+                list.drain(zeroth..second);        
+
+                if zeroth == 0 {
+                    zeroth+=1;
+                    first+=1;
+                    second+=1;
+                }else{
+                    zeroth-=1;
+                    first-=1;
+                    second-=1;
+                }
+                
+                i+=1;
+            }
+
+            //In case two elements are left,
+            //this means some unary operation is on the second place, thus it can be folded deterministicaly.
+            if list.len() == 2{
+                list[1].first = Some(Box::new(list[0].clone()));
+                list.remove(0);
             }
         }
     }
 
-    print_tree(&list[0], 0, ' ');
-
-    list[0].return_copy()
+    //println!("Lista {:?}, duzina {}", list, list.len());
+    //print_tree(&list[0], 0, '\n');
+    println!("----- ENDED TREE CREATION -----");
+    list[0].clone()
 }
 
+//This implementation works on all of my test cases, but it can be further optimized, 
+//because all .contains operations are O(n) complexity. I feel that unary_ops can be implemented better.
+//Write tests for this function!
+fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
+    //check if it's more efficient to format this differently
+    let unary_ops = vec![Func::Sin,Func::Cos,Func::Tg,Func::Ctg,Func::Ln,Func::Exp,Func::Sqrt,Func::Atg,Func::Actg,Func::Asin,Func::Acos];
+    match list.len() {
+        0 => {
+            panic!("Tree can't be generated due to list having no elements");
+        }
+
+        1 => {
+            return list[0].clone();
+        }
+
+        2 => {
+            //check if this thing works proprely
+            list[1].first = Some(Box::new(list[0].clone()));
+            list.remove(0);
+        }
+
+        _ => {
+            let mut second: usize = 2;
+            let mut first: usize = 1;
+            let mut zeroth: usize = 0;
+
+            while list.len() > 2{ //this ensures that the queue is always longer than two elements
+                if unary_ops.contains(&list[first].op) && list[first].first.is_none(){
+                    list[first].first = Some(Box::new(list[zeroth].clone()));
+                    list.remove(zeroth);
+                    continue;
+                }
+
+                if (list[second].op == Func::X || list[second].op == Func::Const) && zeroth == 0{
+                    zeroth+=1;
+                    first+=1;
+                    second+=1;
+                }
+
+                if zeroth == 1 && unary_ops.contains(&list[zeroth].op) && list[zeroth].first.is_none(){
+                    list[1].first = Some(Box::new(list[0].clone()));
+                    list.remove(0);
+                    continue;
+                }
+
+                if unary_ops.contains(&list[second].op){
+                    list[second].first = Some(Box::new(list[first].clone()));
+                    list.remove(first);                    
+                    continue;
+                }
+                
+                list[second].first = Some(Box::new(list[first].clone()));
+                list[second].second = Some(Box::new(list[zeroth].clone()));
+                list.drain(zeroth..second);        
+
+                if zeroth == 0 {
+                    zeroth+=1;
+                    first+=1;
+                    second+=1;
+                }else{
+                    zeroth-=1;
+                    first-=1;
+                    second-=1;
+                }
+            }
+
+            //In case two elements are left,
+            //this means some unary operation is on the second place, thus it can be folded deterministicaly.
+            if list.len() == 2{
+                list[1].first = Some(Box::new(list[0].clone()));
+                list.remove(0);
+            }
+        }
+    }
+    list[0].clone()
+}
+
+//Do profiling for all of the parts of this function, maybe frist line of the function can be optimized more.
 pub fn str_to_tree_iter(function: &str) -> Node{
     let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));    
     let root = postfix_to_tree(&mut list);

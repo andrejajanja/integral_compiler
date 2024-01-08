@@ -60,7 +60,7 @@ impl ToString for Func {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Node {
     pub first: Option<Box<Node>>,
     pub second: Option<Box<Node>>,
@@ -100,8 +100,8 @@ impl Node {
 
     pub fn return_copy(&self) -> Node {
         Node {
-            first: None,
-            second: None,
+            first: self.first.clone(),
+            second: self.second.clone(),
             op: self.op,
             c: self.c,
         }
