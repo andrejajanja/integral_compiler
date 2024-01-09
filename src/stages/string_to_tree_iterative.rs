@@ -4,18 +4,40 @@ use crate::parts::object_type_definitions::*;
 
 use super::tree_to_ir::print_tree;
 
-fn print_tree_iter(root: Node) -> String {
+pub fn tree_to_string_iter(root: &Node) -> String {
+    let helper_root = root.clone();
     let mut content = String::from("");
     let mut st: Vec<Node> = Vec::<Node>::new();
 
-    st.push(root);
+    st.push(helper_root);
+    loop {
+        match st.pop(){
+            Some(mut nd) => {
+                loop{
+                    content += &(nd.op.to_string() + ",");
 
-    while(st.len() != 0){
-        match st.pop() {
-            Some(nd){
-                let mut temp: Node = nd;
+                    match &nd.second {
+                        Some(scnd) => {
+                            st.push(*scnd.clone());
+                        }
+                        None => {
+
+                        }
+                    }
+
+                    match &nd.first {
+                        Some(x) => {
+                            nd = *x.clone();
+                            continue;
+                        }
+                        None => {
+                            break;
+                        }
+                    } 
+                    
+                }
             }
-            None {
+            None => {
                 break;
             }
         }
@@ -469,17 +491,17 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
                 list[second].second = Some(Box::new(list[zeroth].clone()));
                 list.drain(zeroth..second);        
 
-                if list.len() > 3{
-                    if zeroth == 0{
+                if zeroth == 0{
+                    if list.len() > 3{
                         zeroth+=1;
                         first+=1;
                         second+=1;
-                    }else{
-                        zeroth-=1;
-                        first-=1;
-                        second-=1;
                     }
-                }                
+                }else{
+                    zeroth-=1;
+                    first-=1;
+                    second-=1;
+                }   
             }
 
             //In case two elements are left,
@@ -496,6 +518,6 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
 //Do profiling for all of the parts of this function, maybe frist line of the function can be optimized more.
 pub fn str_to_tree_iter(function: &str) -> Node{
     let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));    
-    let root = postfix_to_tree_verbose(&mut list);
+    let root = postfix_to_tree(&mut list);
     root
 }
