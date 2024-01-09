@@ -438,7 +438,6 @@ fn postfix_to_tree_verbose(list: &mut Vec<Node>) -> Node {
 
 //This implementation works on all of my test cases, but it can be further optimized, 
 //because all .contains operations are O(n) complexity. I feel that unary_ops can be implemented better.
-//Write tests for this function!
 fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
     //check if it's more efficient to format this differently
     let unary_ops = vec![Func::Sin,Func::Cos,Func::Tg,Func::Ctg,Func::Ln,Func::Exp,Func::Sqrt,Func::Atg,Func::Actg,Func::Asin,Func::Acos];
@@ -453,8 +452,7 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
 
         2 => {
             //check if this thing works proprely
-            list[1].first = Some(Box::new(list[0].clone()));
-            list.remove(0);
+            list[0].first = Some(Box::new(list.remove(0)));
         }
 
         _ => {
@@ -464,8 +462,7 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
 
             while list.len() > 2{ //this ensures that the queue is always longer than two elements
                 if unary_ops.contains(&list[first].op) && list[first].first.is_none(){
-                    list[first].first = Some(Box::new(list[zeroth].clone()));
-                    list.remove(zeroth);
+                    list[zeroth].first = Some(Box::new(list.remove(zeroth)));
                     continue;
                 }
 
@@ -476,20 +473,17 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
                 }
 
                 if zeroth == 1 && unary_ops.contains(&list[zeroth].op) && list[zeroth].first.is_none(){
-                    list[1].first = Some(Box::new(list[0].clone()));
-                    list.remove(0);
+                    list[0].first = Some(Box::new(list.remove(0)));                    
                     continue;
                 }
 
                 if unary_ops.contains(&list[second].op){
-                    list[second].first = Some(Box::new(list[first].clone()));
-                    list.remove(first);                    
+                    list[first].first = Some(Box::new(list.remove(first)));                                     
                     continue;
                 }
                 
-                list[second].first = Some(Box::new(list[first].clone()));
-                list[second].second = Some(Box::new(list[zeroth].clone()));
-                list.drain(zeroth..second);        
+                list[first].first = Some(Box::new(list.remove(first)));
+                list[zeroth].second = Some(Box::new(list.remove(zeroth)));
 
                 if zeroth == 0{
                     if list.len() > 3{
@@ -507,8 +501,7 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
             //In case two elements are left,
             //this means some unary operation is on the second place, thus it can be folded deterministicaly.
             if list.len() == 2{
-                list[1].first = Some(Box::new(list[0].clone()));
-                list.remove(0);
+                list[0].first = Some(Box::new(list.remove(0)));
             }
         }
     }

@@ -7,7 +7,6 @@ use stages::{string_to_tree_iterative::*, tree_to_ir::print_tree};
 
 // toy main:
 fn main(){
-
     //let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)/cos(x)");
     // let function = String::from("sin(x)*e^(x)+cos(x)*ln(x)");
     //let function = String::from("sin(x)");
@@ -19,8 +18,7 @@ fn main(){
     
     let root = str_to_tree_iter(&function);
     print_tree(&root, 0, '\n');
-    println!("{}", tree_to_string_iter(&root));
-    
+        
     //generate_ir(&tree);
 }
 
@@ -49,3 +47,8 @@ fn main(){
         //print aproxiation result with a funciton    
 //     //print!("\n\n  {}\n\n ∫ 3*x + 7 dx  =  89.0\t\t(With {steps} steps)\n\n{}\n\n", end, start);
 // }
+
+#[cfg(test)]
+mod tests {
+    mod unit_tree;
+}
