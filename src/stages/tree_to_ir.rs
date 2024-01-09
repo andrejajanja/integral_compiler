@@ -163,3 +163,4 @@ pub fn generate_ir(node: &Node) {
 
     file.write(contents.as_bytes()).expect("Failed writing to an .ll file");
 }
+

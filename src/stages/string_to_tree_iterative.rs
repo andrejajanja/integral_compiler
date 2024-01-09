@@ -4,6 +4,26 @@ use crate::parts::object_type_definitions::*;
 
 use super::tree_to_ir::print_tree;
 
+fn print_tree_iter(root: Node) -> String {
+    let mut content = String::from("");
+    let mut st: Vec<Node> = Vec::<Node>::new();
+
+    st.push(root);
+
+    while(st.len() != 0){
+        match st.pop() {
+            Some(nd){
+                let mut temp: Node = nd;
+            }
+            None {
+                break;
+            }
+        }
+    }
+
+    content
+}
+
 fn try_parsing(chunk: &str) -> Option<Node> {
     match chunk.len() {
         1 => {
@@ -327,7 +347,7 @@ fn postfix_to_tree_verbose(list: &mut Vec<Node>) -> Node {
             let mut i: usize = 0;
 
             while list.len() > 2{ //this ensures that the queue is always longer than two elements
-                println!("-------------Passing, queue state - len: {}, zeroth {}", list.len(), zeroth);
+                println!("------------- {}th Passing, queue state - len: {}, zeroth {}", i, list.len(), zeroth);
                 for temp in &mut *list{
                     print!("-> ");
                     print_tree(temp, 0, '\n');
@@ -364,10 +384,12 @@ fn postfix_to_tree_verbose(list: &mut Vec<Node>) -> Node {
                 list[second].second = Some(Box::new(list[zeroth].clone()));
                 list.drain(zeroth..second);        
 
-                if zeroth == 0 {
-                    zeroth+=1;
-                    first+=1;
-                    second+=1;
+                if zeroth == 0{
+                    if list.len() > 3{
+                        zeroth+=1;
+                        first+=1;
+                        second+=1;
+                    }
                 }else{
                     zeroth-=1;
                     first-=1;
@@ -447,15 +469,17 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
                 list[second].second = Some(Box::new(list[zeroth].clone()));
                 list.drain(zeroth..second);        
 
-                if zeroth == 0 {
-                    zeroth+=1;
-                    first+=1;
-                    second+=1;
-                }else{
-                    zeroth-=1;
-                    first-=1;
-                    second-=1;
-                }
+                if list.len() > 3{
+                    if zeroth == 0{
+                        zeroth+=1;
+                        first+=1;
+                        second+=1;
+                    }else{
+                        zeroth-=1;
+                        first-=1;
+                        second-=1;
+                    }
+                }                
             }
 
             //In case two elements are left,
@@ -472,6 +496,6 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
 //Do profiling for all of the parts of this function, maybe frist line of the function can be optimized more.
 pub fn str_to_tree_iter(function: &str) -> Node{
     let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));    
-    let root = postfix_to_tree(&mut list);
+    let root = postfix_to_tree_verbose(&mut list);
     root
 }
