@@ -1,28 +1,31 @@
 mod parts;
 mod stages;
+
+// use std::process::exit;
+// use std::env;
+// use parts::auxilary_functions::{print_help, parse_inputs};
+use crate::stages::string_to_ir::generate_ir;
+
 //use std::time::Instant;
 
-use stages::{string_to_tree_iterative::*, tree_to_ir::print_tree};
-//use stages::string_to_tree_recursive::*;
-
-// toy main:
+//toy main:
 fn main(){
-    //let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)/cos(x)");
+    let _a = 5;
+    let _b = 10;
+    let _steps = 1000000;
+    let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)/cos(x)");
     // let function = String::from("sin(x)*e^(x)+cos(x)*ln(x)");
     //let function = String::from("sin(x)");
-    let function = String::from("3*x+7");
-    
-    // let start = Instant::now();
-    // let duration = start.elapsed();
-    // println!("Time spent: {:?}", duration);
-    
-    let root = str_to_tree_iter(&function);
-    print_tree(&root, 0, '\n');
-        
-    //generate_ir(&tree);
+    //let function = String::from("3*x+7");
+    //let function = String::from("sin(x)+7*e^(atg(x+11))");    
+    //let start = Instant::now();
+    //let duration = start.elapsed();
+    //println!("Time spent: {:?}", duration);
+    let ir_code = generate_ir(&function);
+    println!("{}", ir_code);
 }
 
-// whole main
+// whole main, DO SOME WORK ON USER FUCKING EXPERIANCE
 // fn main() {
 //     let provided: Vec<String> = env::args().collect();
 //     if provided.len() != 1 {
@@ -31,21 +34,16 @@ fn main(){
 //             exit(0);
 //         }
 //     }
-//     let mut function = String::new();
-//     let mut start: f64;
-//     let mut end: f64;
-//     let mut steps: u64;
-//     parse_inputs(&mut function, &mut start, &mut end, &mut steps);
+//     let (mut function, start, end, steps) = parse_inputs();
 //     function = function.replace(" ", "");
-    // let mut tree = Node::new();
 
-    // generate_tree_from_string(&mut function, &mut tree);
+//     let ir_code = generate_ir(&function);
+//     println!("{}", ir_code);
 
-        //generate assembly code from tree
-        //generate machine code from that assembly and pack it in an executable
-        //run executable and pass the result to this program
-        //print aproxiation result with a funciton    
-//     //print!("\n\n  {}\n\n ∫ 3*x + 7 dx  =  89.0\t\t(With {steps} steps)\n\n{}\n\n", end, start);
+//     // generate machine code from that assembly and pack it in an executable
+//     // run executable and pass the result to this program
+//     // print aproxiation result with a funciton    
+//     print!("\n\n  {}\n\n ∫ 3*x + 7 dx  =  89.0\t\t(With {steps} steps)\n\n{}\n\n", end, start);
 // }
 
 #[cfg(test)]

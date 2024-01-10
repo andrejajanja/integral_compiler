@@ -3,6 +3,54 @@ use std::process::exit;
 
 use crate::parts::object_type_definitions::*;
 
+pub fn print_tree_rec(node: &Node, tab: usize, addition: char) {
+    match &node.op {
+        Func::Const => {
+            print!("{}| {:?} |{}", "\t".repeat(tab), node.c, addition);
+        }
+        _ => {
+            print!("{}| {:?} |{}", "\t".repeat(tab), node.op, addition);
+        }
+    }
+    match &node.first {
+        Some(no) => {
+            match &node.second {
+                None => {
+                    print!("\n");
+                }
+                Some(_x) => {}
+            }
+
+            print_tree_rec(&no, tab + 1, '\n');
+        }
+        None => {}
+    }
+    match &node.second {
+        Some(no) => {
+            print_tree_rec(&no, tab + 1, '\n');
+        }
+        None => {}
+    }
+}
+
+fn find_unique_funcs_rec(node: &Node, funs: &mut Vec<Func>) {
+    if !funs.contains(&node.op) &&  node.op != Func::Const && node.op != Func::X{
+        funs.push(node.op); //you will maybe need to add .clone() here to op
+    }
+    match &node.first {
+        Some(no) => {
+            find_unique_funcs_rec(&no, funs);
+        }
+        None => {return;}
+    }
+    match &node.second {
+        Some(no) => {
+            find_unique_funcs_rec(&no, funs);
+        }
+        None => {return;}
+    }
+}
+
 fn split_by_ops(
     function: &String,
     op1: char,

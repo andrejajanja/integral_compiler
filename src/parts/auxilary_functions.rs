@@ -24,16 +24,18 @@ pub fn print_help() {
     range end -> where the range ends (number, integer or a real number)
     number of steps -> integrer of steps on which the intgeral of a function is aproximated\n\t(recommended value is between 10^4 and 10^7)
     
-    Made by Andreja Janković; Year 2023; E-mail: andrejajanja@gmail.com\n\n");
+    Made by Andreja Janković; Year 2024; E-mail: andrejajanja@gmail.com\n\n");
 }
 
 pub fn pnc_not_impl() {
     panic!("NOT YET IMPLEMENTED");
 }
 
-pub fn parse_inputs(function: &mut String, start: &mut f64, end: &mut f64, steps: &mut u64) {
+pub fn parse_inputs() -> (String, f64, f64, u64){
+    let mut function = String::from("");
+
     println!("f(x) = ");
-    stdin().read_line(function).unwrap_or_else(|err| {
+    stdin().read_line(&mut function).unwrap_or_else(|err| {
         println!("\n\nError while taking a function input: {err}\n\n");
         exit(0);
     });
@@ -54,7 +56,7 @@ pub fn parse_inputs(function: &mut String, start: &mut f64, end: &mut f64, steps
         exit(0);
     }
 
-    *start = match provided[0].parse::<f64>() {
+    let start = match provided[0].parse::<f64>() {
         Ok(x) => x,
         Err(e) => {
             println!(
@@ -65,7 +67,7 @@ pub fn parse_inputs(function: &mut String, start: &mut f64, end: &mut f64, steps
         }
     };
 
-    *end = match provided[1].parse::<f64>() {
+    let end = match provided[1].parse::<f64>() {
         Ok(x) => x,
         Err(e) => {
             println!(
@@ -76,13 +78,15 @@ pub fn parse_inputs(function: &mut String, start: &mut f64, end: &mut f64, steps
         }
     };
 
-    *steps = match provided[2].parse::<u64>() {
+    let steps = match provided[2].parse::<u64>() {
         Ok(num) => num,
         Err(e) => {
             println!("\n\nError parsing number of steps argument: {e}\nthis is the value passed: '{}'\n\n", provided[2]);
             exit(0);
         }
     };
+
+    (function, start, end, steps)
 }
 
 // #[macro_export()]

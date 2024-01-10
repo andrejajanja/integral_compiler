@@ -2,13 +2,12 @@
 use std::process::exit;
 use crate::parts::object_type_definitions::*;
 
-use super::tree_to_ir::print_tree;
+use super::string_to_tree_recursive::print_tree_rec;
 
 pub fn tree_to_string_iter(root: &Node) -> String {
     let helper_root = root.clone();
     let mut content = String::from("");
     let mut st: Vec<Node> = Vec::<Node>::new();
-
     st.push(helper_root);
     loop {
         match st.pop(){
@@ -24,7 +23,6 @@ pub fn tree_to_string_iter(root: &Node) -> String {
 
                         }
                     }
-
                     match &nd.first {
                         Some(x) => {
                             nd = *x.clone();
@@ -34,7 +32,6 @@ pub fn tree_to_string_iter(root: &Node) -> String {
                             break;
                         }
                     } 
-                    
                 }
             }
             None => {
@@ -42,7 +39,6 @@ pub fn tree_to_string_iter(root: &Node) -> String {
             }
         }
     }
-
     content
 }
 
@@ -372,7 +368,7 @@ fn postfix_to_tree_verbose(list: &mut Vec<Node>) -> Node {
                 println!("------------- {}th Passing, queue state - len: {}, zeroth {}", i, list.len(), zeroth);
                 for temp in &mut *list{
                     print!("-> ");
-                    print_tree(temp, 0, '\n');
+                    print_tree_rec(temp, 0, '\n');
                 }
 
                 if unary_ops.contains(&list[first].op) && list[first].first.is_none(){
@@ -510,7 +506,48 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
 
 //Do profiling for all of the parts of this function, maybe frist line of the function can be optimized more.
 pub fn str_to_tree_iter(function: &str) -> Node{
-    let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));    
+    let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));
+    println!("{:?}", list);
     let root = postfix_to_tree(&mut list);
     root
+}
+
+fn find_unique_unique_funcs_iter(root: &Node) -> Vec<Func>{
+    let mut unique_funcs = Vec::<Func>::new();
+
+    let helper_root = root.clone();
+    let mut st: Vec<Node> = Vec::<Node>::new();
+    st.push(helper_root);
+    loop {
+        match st.pop(){
+            Some(mut nd) => {
+                loop{
+                    if !unique_funcs.contains(&nd.op) &&  nd.op != Func::Const && nd.op != Func::X{
+                        unique_funcs.push(nd.op);
+                    }
+
+                    match &nd.second {
+                        Some(scnd) => {
+                            st.push(*scnd.clone());
+                        }
+                        None => {}
+                    }
+                    match &nd.first {
+                        Some(x) => {
+                            nd = *x.clone();
+                            continue;
+                        }
+                        None => {
+                            break;
+                        }
+                    } 
+                }
+            }
+            None => {
+                break;
+            }
+        }
+    }
+
+    unique_funcs
 }
