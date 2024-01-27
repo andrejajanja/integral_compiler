@@ -130,7 +130,7 @@ pub fn generate_ir(function: &String) -> String{
         }
     }
 
-    code += "\ndefine double @fja(double &x){\n";
+    code += "\ndefine double @fja(double %x){\n";
     code += &func_code;
     code += &("\tret double %".to_owned() + &(ret_addr+1).to_string() + "\n}");
 

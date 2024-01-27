@@ -14,7 +14,6 @@ pub fn tree_to_string_iter(root: &Node) -> String {
             Some(mut nd) => {
                 loop{
                     content += &(nd.op.to_string() + ",");
-
                     match &nd.second {
                         Some(scnd) => {
                             st.push(*scnd.clone());
@@ -507,7 +506,6 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
 //Do profiling for all of the parts of this function, maybe frist line of the function can be optimized more.
 pub fn str_to_tree_iter(function: &str) -> Node{
     let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));
-    println!("{:?}", list);
     let root = postfix_to_tree(&mut list);
     root
 }

@@ -89,6 +89,34 @@ pub fn parse_inputs() -> (String, f64, f64, u64){
     (function, start, end, steps)
 }
 
+pub fn wrap_ir_code(func_code: String) -> String {
+    let mut code = String::from(r#"declare i32 @printf(i8*, ...)
+
+@formatString = constant [4 x i8] c"%f\0A\00"
+
+define void @printDouble(double %value) {
+    %formattedString = alloca [100 x i8]  ; Allocate space for the formatted string
+    %doublePtr = getelementptr [100 x i8], [100 x i8]* %formattedString, i32 0, i32 0  ; Get pointer to the allocated space
+    call i32 (i8*, ...) @sprintf(i8* %doublePtr, [4 x i8]* @doubleFormat, double %value)  ; Format the double value as string
+    call i32 (i8*, ...) @printf(i8* %doublePtr)  ; Print the formatted string
+    ret void
+}
+
+"#);
+
+    code += &func_code;
+    code += r#"
+
+define i32 @main() {
+    %arg = double 3.14 ;ovo ne valja, ostalo je da se sredi
+    %rezultat = call double @fja(double %arg)
+    call void @printDouble(double %rezultat)
+    ret i32 0
+}"#;
+
+    code
+}
+
 // #[macro_export()]
 // macro_rules! measure_time {
 //     ($code:block) => {{

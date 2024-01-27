@@ -5,6 +5,10 @@ mod stages;
 // use std::env;
 // use parts::auxilary_functions::{print_help, parse_inputs};
 use crate::stages::string_to_ir::generate_ir;
+use crate::parts::auxilary_functions::wrap_ir_code;
+use std::fs;
+// use crate::stages::string_to_tree_iterative::str_to_tree_iter;
+// use crate::stages::string_to_tree_recursive::print_tree_rec;
 
 //use std::time::Instant;
 
@@ -13,7 +17,7 @@ fn main(){
     let _a = 5;
     let _b = 10;
     let _steps = 1000000;
-    let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)/cos(x)");
+    let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)");
     // let function = String::from("sin(x)*e^(x)+cos(x)*ln(x)");
     //let function = String::from("sin(x)");
     //let function = String::from("3*x+7");
@@ -21,8 +25,13 @@ fn main(){
     //let start = Instant::now();
     //let duration = start.elapsed();
     //println!("Time spent: {:?}", duration);
-    let ir_code = generate_ir(&function);
-    println!("{}", ir_code);
+    
+    let ir_code = wrap_ir_code(generate_ir(&function));
+
+    fs::write("/home/andreja/Documents/rust_projects/integral_aprox/IR_code.ll", ir_code).expect("neka greska");
+
+    // let root = str_to_tree_iter(&function);
+    // print_tree_rec(&root, 0, ' ');
 }
 
 // whole main, DO SOME WORK ON USER FUCKING EXPERIANCE
