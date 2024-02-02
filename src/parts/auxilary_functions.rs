@@ -90,27 +90,19 @@ pub fn parse_inputs() -> (String, f64, f64, u64){
 }
 
 pub fn wrap_ir_code(func_code: String) -> String {
-    let mut code = String::from(r#"declare i32 @printf(i8*, ...)
-
-@formatString = constant [4 x i8] c"%f\0A\00"
-
-define void @printDouble(double %value) {
-    %formattedString = alloca [100 x i8]  ; Allocate space for the formatted string
-    %doublePtr = getelementptr [100 x i8], [100 x i8]* %formattedString, i32 0, i32 0  ; Get pointer to the allocated space
-    call i32 (i8*, ...) @sprintf(i8* %doublePtr, [4 x i8]* @doubleFormat, double %value)  ; Format the double value as string
-    call i32 (i8*, ...) @printf(i8* %doublePtr)  ; Print the formatted string
-    ret void
-}
-
+    let mut code = String::from(r#"@.fstr = private unnamed_addr constant [4 x i8] c"%f\0A\00"
+declare i32 @lrintf(i8*, ...)
 "#);
 
     code += &func_code;
     code += r#"
-
 define i32 @main() {
-    %arg = double 3.14 ;ovo ne valja, ostalo je da se sredi
+    %ptr = alloca double; alociranje memorije opranda
+    store double 7.530000e0, double *%ptr; store vrednosti
+    %arg = load double, double* %ptr; ubacivanje na stack
     %rezultat = call double @fja(double %arg)
-    call void @printDouble(double %rezultat)
+    %1 = getelementptr [4 x i8],[4 x i8]* @.fstr, i64 0, i64 0
+    %2 = call i32 (i8*, ...) @lrintf(i8* %1, double %rezultat)
     ret i32 0
 }"#;
 

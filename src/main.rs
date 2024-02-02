@@ -17,10 +17,10 @@ fn main(){
     let _a = 5;
     let _b = 10;
     let _steps = 1000000;
-    let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)");
+    //let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)");
     // let function = String::from("sin(x)*e^(x)+cos(x)*ln(x)");
     //let function = String::from("sin(x)");
-    //let function = String::from("3*x+7");
+    let function = String::from("3*x+7");
     //let function = String::from("sin(x)+7*e^(atg(x+11))");    
     //let start = Instant::now();
     //let duration = start.elapsed();
