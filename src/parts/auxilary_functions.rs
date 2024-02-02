@@ -91,18 +91,25 @@ pub fn parse_inputs() -> (String, f64, f64, u64){
 
 pub fn wrap_ir_code(func_code: String) -> String {
     let mut code = String::from(r#"@.fstr = private unnamed_addr constant [4 x i8] c"%f\0A\00"
-declare i32 @lrintf(i8*, ...)
+declare i32 @printf(i8*, ...)
+declare double @llvm.readcyclecounter() nounwind readnone
 "#);
 
     code += &func_code;
     code += r#"
 define i32 @main() {
-    %ptr = alloca double; alociranje memorije opranda
-    store double 7.530000e0, double *%ptr; store vrednosti
-    %arg = load double, double* %ptr; ubacivanje na stack
+    %ptr = alloca double
+    store double 1.000000e0, double *%ptr
+    %arg = load double, double* %ptr
+
+    %start = call double @llvm.readcyclecounter()
     %rezultat = call double @fja(double %arg)
+    %end = call double @llvm.readcyclecounter()
+    %elapsed_cycles = fsub double %end, %start
+    %elapsed_time = fdiv double %elapsed_cycles, 2.5e9
+
     %1 = getelementptr [4 x i8],[4 x i8]* @.fstr, i64 0, i64 0
-    %2 = call i32 (i8*, ...) @lrintf(i8* %1, double %rezultat)
+    %2 = call i32 (i8*, ...) @printf(i8* %1, double %elapsed_time)
     ret i32 0
 }"#;
 
