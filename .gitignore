@@ -3,4 +3,4 @@ example.o
 exe
 IR_code.ll
 executable
-ir_out.o
+content.txt
