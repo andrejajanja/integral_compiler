@@ -1,4 +1,7 @@
 [package]
-name = "integral_aprox"
+name = "Integral_Compiler"
 version = "0.1.0"
 edition = "2021"
+
+[dependencies]
+llvm-sys = "160"

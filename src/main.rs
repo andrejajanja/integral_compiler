@@ -6,19 +6,54 @@ mod stages;
 // use parts::auxilary_functions::{print_help, parse_inputs};
 // use crate::stages::string_to_ir::generate_ir;
 // use std::fs;
+use llvm_sys as llvm;
 use std::ptr;
 
 fn main(){
     // let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)");
     // let ir_str = generate_ir(&function);
 
-    let fun_ptr: fn() -> u32 = fun;
-    let fn_address = fun_ptr as *mut u32;
+    // let fun_ptr: fn() -> u32 = fun;
+    // let fn_address = fun_ptr as *mut u32;
 
-    println!("Adresa funkcije: {:?}", fn_address);
+    // println!("Adresa funkcije: {:?}", fn_address);
+
+    // unsafe {
+    //     println!("{:X}\n{:X}", ptr::read(fn_address), ptr::read(fn_address.add(1)));
+    // }
 
     unsafe {
-        println!("{:X}\n{:X}", ptr::read(fn_address), ptr::read(fn_address.add(1)));
+        // Set up a context, module and builder in that context.
+        let context = llvm::core::LLVMContextCreate();
+        let module = llvm::core::LLVMModuleCreateWithName(b"nop\0".as_ptr() as *const _);
+        let builder = llvm::core::LLVMCreateBuilderInContext(context);
+
+        // Get the type signature for void nop(void);
+        // Then create it in our module.
+        let void = llvm::core::LLVMVoidTypeInContext(context);
+        let function_type = llvm::core::LLVMFunctionType(void, ptr::null_mut(), 0, 0);
+        let function =
+            llvm::core::LLVMAddFunction(module, b"nop\0".as_ptr() as *const _, function_type);
+
+        // Create a basic block in the function and set our builder to generate
+        // code in it.
+        let bb = llvm::core::LLVMAppendBasicBlockInContext(
+            context,
+            function,
+            b"entry\0".as_ptr() as *const _,
+        );
+        llvm::core::LLVMPositionBuilderAtEnd(builder, bb);
+
+        // Emit a `ret void` into the function
+        llvm::core::LLVMBuildRetVoid(builder);
+
+        // Dump the module as IR to stdout.
+        llvm::core::LLVMDumpModule(module);
+
+        // Clean up. Values created in the context mostly get cleaned up there.
+        llvm::core::LLVMDisposeBuilder(builder);
+        llvm::core::LLVMDisposeModule(module);
+        llvm::core::LLVMContextDispose(context);
     }
 }
 
