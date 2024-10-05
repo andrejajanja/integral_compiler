@@ -1,64 +1,123 @@
+#![allow(temporary_cstring_as_ptr)]
+
 mod parts;
 mod stages;
 
 // use std::process::exit;
 // use std::env;
 // use parts::auxilary_functions::{print_help, parse_inputs};
-// use crate::stages::string_to_ir::generate_ir;
-// use std::fs;
+use crate::stages::string_to_ir::generate_ir;
+use std::fs::File;
+use std::io::Write;
 use llvm_sys as llvm;
+use llvm::core::*;
+use llvm::prelude::*;
+use llvm::ir_reader::LLVMParseIRInContext;
+use llvm::target::*;
+use llvm::target_machine::*;
+use std::ffi::{CString, CStr};
 use std::ptr;
 
-fn main(){
-    // let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)");
-    // let ir_str = generate_ir(&function);
+use libc::{c_void, mmap, PROT_READ, PROT_WRITE, PROT_EXEC, MAP_PRIVATE, MAP_ANONYMOUS};
 
-    // let fun_ptr: fn() -> u32 = fun;
-    // let fn_address = fun_ptr as *mut u32;
-
-    // println!("Adresa funkcije: {:?}", fn_address);
-
-    // unsafe {
-    //     println!("{:X}\n{:X}", ptr::read(fn_address), ptr::read(fn_address.add(1)));
-    // }
-
-    unsafe {
-        // Set up a context, module and builder in that context.
-        let context = llvm::core::LLVMContextCreate();
-        let module = llvm::core::LLVMModuleCreateWithName(b"nop\0".as_ptr() as *const _);
-        let builder = llvm::core::LLVMCreateBuilderInContext(context);
-
-        // Get the type signature for void nop(void);
-        // Then create it in our module.
-        let void = llvm::core::LLVMVoidTypeInContext(context);
-        let function_type = llvm::core::LLVMFunctionType(void, ptr::null_mut(), 0, 0);
-        let function =
-            llvm::core::LLVMAddFunction(module, b"nop\0".as_ptr() as *const _, function_type);
-
-        // Create a basic block in the function and set our builder to generate
-        // code in it.
-        let bb = llvm::core::LLVMAppendBasicBlockInContext(
-            context,
-            function,
-            b"entry\0".as_ptr() as *const _,
-        );
-        llvm::core::LLVMPositionBuilderAtEnd(builder, bb);
-
-        // Emit a `ret void` into the function
-        llvm::core::LLVMBuildRetVoid(builder);
-
-        // Dump the module as IR to stdout.
-        llvm::core::LLVMDumpModule(module);
-
-        // Clean up. Values created in the context mostly get cleaned up there.
-        llvm::core::LLVMDisposeBuilder(builder);
-        llvm::core::LLVMDisposeModule(module);
-        llvm::core::LLVMContextDispose(context);
-    }
+unsafe fn allocate_executable_memory(size: usize) -> *mut c_void {
+    mmap(
+        std::ptr::null_mut(),
+        size,
+        PROT_READ | PROT_WRITE | PROT_EXEC,
+        MAP_PRIVATE | MAP_ANONYMOUS,
+        -1,
+        0,
+    )
 }
 
-fn fun() -> u32{
-    0
+type CompiledFunc = extern "C" fn(f64) -> f64;
+
+fn main(){
+    let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)");
+    let llvm_ir = generate_ir(&function);
+    let ir_c_string = CString::new(llvm_ir.clone()).unwrap();
+
+
+    unsafe {
+        let context = LLVMContextCreate();
+        let buffer = LLVMCreateMemoryBufferWithMemoryRangeCopy(
+            ir_c_string.as_ptr(),
+            llvm_ir.len(),            
+            CString::new("LLVM IR").unwrap().as_ptr()
+        );
+
+        let mut module: LLVMModuleRef = ptr::null_mut();
+        let mut error: *mut i8 = ptr::null_mut();
+        if LLVMParseIRInContext(context, buffer, &mut module, &mut error) != 0 {
+            eprintln!("Error parsing IR: {:?}", error);
+            LLVMDisposeMessage(error);
+            return;
+        }
+
+        LLVM_InitializeAllTargetInfos();
+        LLVM_InitializeAllTargets();
+        LLVM_InitializeAllTargetMCs();
+        LLVM_InitializeAllAsmPrinters();
+        LLVM_InitializeAllAsmParsers();
+
+        let triple = LLVMGetDefaultTargetTriple();
+        let mut target: LLVMTargetRef = ptr::null_mut();
+
+        if LLVMGetTargetFromTriple(triple, &mut target, &mut error) != 0 {
+            eprintln!("Error getting target: {:?}", error);
+            LLVMDisposeMessage(error);
+            return;
+        }
+
+        let target_machine = LLVMCreateTargetMachine(
+            target,
+            triple,
+            CString::new("generic").unwrap().as_ptr(),
+            CString::new("").unwrap().as_ptr(),
+            LLVMCodeGenOptLevel::LLVMCodeGenLevelAggressive,
+            LLVMRelocMode::LLVMRelocDefault,
+            LLVMCodeModel::LLVMCodeModelDefault
+        );
+
+        let mut memory_buffer: LLVMMemoryBufferRef = ptr::null_mut();
+        if LLVMTargetMachineEmitToMemoryBuffer(
+            target_machine,
+            module,
+            LLVMCodeGenFileType::LLVMObjectFile,
+            &mut error,
+            &mut memory_buffer
+        ) != 0{
+            let error_message = CStr::from_ptr(error).to_string_lossy().into_owned();
+            eprintln!("Error emitting machine code to buffer: {:?}", error_message);
+            LLVMDisposeMessage(error);
+            return;
+        }
+
+        //let offset = 117;
+        let buffer_start = LLVMGetBufferStart(memory_buffer) as *const u8;
+        let buffer_size = LLVMGetBufferSize(memory_buffer);
+
+        let buffer_data = std::slice::from_raw_parts(buffer_start, buffer_size as usize);
+        let mut file = File::create("example.o").unwrap();
+        file.write(buffer_data).unwrap();
+        file.flush().unwrap();
+
+        let func_memory = allocate_executable_memory(buffer_size);
+        std::ptr::copy_nonoverlapping(buffer_start, func_memory as *mut u8, buffer_size);
+
+        let fja: CompiledFunc = std::mem::transmute(func_memory);
+
+        let result = fja(0.57);
+        println!("Result of the function: {}", result);
+
+
+        LLVMDisposeMemoryBuffer(memory_buffer);
+        LLVMDisposeModule(module);
+        LLVMDisposeTargetMachine(target_machine);
+        LLVMContextDispose(context);
+        LLVMDisposeMessage(triple);
+    }
 }
 
 //toy main:

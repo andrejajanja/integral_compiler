@@ -1,2 +1,2 @@
-objdump -f ir_out.o
-objdump -d ir_out.o
+objdump -f example.o
+objdump -d example.o
