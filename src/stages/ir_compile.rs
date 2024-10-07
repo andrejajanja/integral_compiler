@@ -3,7 +3,7 @@ use std::process::exit;//, fs::read_to_string, fs::File, io::Write};
 use crate::parts::object_type_definitions::*;
 use crate::stages::string_to_tree_iterative::{string_to_vec_of_node, vec_infix_to_postfix};
 
-fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
+fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16, Vec<Func>){
     fn safely_pop_from_stacks(op_st: &mut Vec<i16>, cnst_st: &mut Vec<String>, one_two: bool) -> String{
         match op_st.pop() {
             Some(x) => {
@@ -42,6 +42,7 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
     }
 
     let mut unique_funcs: Vec<Func> = Vec::<Func>::new();
+    let mut called_queue: Vec<Func> = Vec::<Func>::new();
     let mut code = String::from("");
 
     let mut address: i16 = 0;
@@ -63,7 +64,8 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
             Func::Sqrt | Func::Ln | Func::Exp | Func::Sin | Func::Cos | Func::Tg | Func::Ctg | Func::Asin | Func::Acos | Func::Atg | Func::Actg=> {
                 let oper: String = safely_pop_from_stacks(&mut operand_stack, &mut const_stack, true);
                 address+=1;
-                code += &format!("\t%{} = call double @llvm.{}(double {}) nounwind readnone\n", address, temp.op.ir_string(), oper);
+                code += &format!("\t%{} = call double @{}(double {}) nounwind\n", address, temp.op.ir_string(), oper);
+                called_queue.push(temp.op);
                 match temp.op {
                     Func::Ctg => {
                         address+=1;
@@ -113,18 +115,18 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
         }    
     }
 
-    (code, unique_funcs, address-1)
+    (code, unique_funcs, address-1, called_queue)
 }
 
-pub fn generate_ir(function: &String) -> String{    
+pub fn generate_ir(function: &String) -> (String, Vec<Func>){
     let function_infix = string_to_vec_of_node(function);
     let function_postfix = vec_infix_to_postfix(function_infix);
 
-    let (mut func_code,functions_to_define, ret_addr) = compile_postfix(function_postfix);
+    let (mut func_code,functions_to_define, ret_addr, call_symbols) = compile_postfix(function_postfix);
     let mut code = String::from("");
 
     for elem in functions_to_define {
-        code += &format!("declare double @llvm.{}(double %Val) nounwind readnone\n", elem.ir_string());
+        code += &format!("declare double @{}(double) nounwind\n", elem.ir_string());
         if elem == Func::Actg {
             func_code = "\t%pi_over_2 = fpext double 1, double\n\n".to_owned() + &func_code;
         }
@@ -134,11 +136,6 @@ pub fn generate_ir(function: &String) -> String{
     code += &func_code;
     code += &("\tret double %".to_owned() + &(ret_addr+1).to_string() + "\n}");
 
-    code
-    // let contents = read_to_string("IR_template.txt").expect("problem reading the file");
-    // //-put definitions string in the IR_code file
-    // let mut file = File::create("IR_code.ll").expect("Creating of an .ll file failed");
-
-    // file.write(contents.as_bytes()).expect("Failed writing to an .ll file");
+    (code, call_symbols)
 }
 
