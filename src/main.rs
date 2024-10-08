@@ -5,7 +5,7 @@
 mod parts;
 mod stages;
 
-use crate::stages::{ir_compile::generate_ir,  linking::link_functions, linking::sin};
+use crate::stages::{ir_compile::generate_ir,  linking::link_functions};
 use std::fs::File;
 use std::io::{Write, Read, self, BufRead};
 use llvm_sys as llvm;
@@ -14,13 +14,11 @@ use llvm::prelude::*;
 use llvm::ir_reader::LLVMParseIRInContext;
 use llvm::target::*;
 use llvm::target_machine::*;
+use stages::linking::find_text_section;
 use std::ffi::{CString, CStr};
 use std::ptr;
 
 use libc::{c_void, mmap, PROT_READ, PROT_WRITE, PROT_EXEC, MAP_PRIVATE, MAP_ANONYMOUS};
-
-type CompiledFunc = extern "C" fn(f64) -> f64;
-
 
 fn main(){
     let page_size = unsafe { libc::sysconf(libc::_SC_PAGESIZE) } as usize;
@@ -31,7 +29,9 @@ fn main(){
     let mut temp_buffer = Vec::new();
     file.read_to_end(&mut temp_buffer).unwrap();
     
-    
+    let buffer: &[u8] = &temp_buffer;
+
+    find_text_section(buffer);
     
     return;
 
@@ -39,20 +39,20 @@ fn main(){
 
     unsafe{
         let aligned_size = (buffer_size + page_size - 1) & !(page_size - 1);
-        let func_memory = mmap(
-            (sin as *mut u8).sub(0x40000) as *mut _,
-            aligned_size,
-            PROT_READ | PROT_WRITE | PROT_EXEC,
-            MAP_PRIVATE | MAP_ANONYMOUS,
-            -1,
-            0,
-        );
+        // let func_memory = mmap(
+        //     (sin as *mut u8).sub(0x40000) as *mut _,
+        //     aligned_size,
+        //     PROT_READ | PROT_WRITE | PROT_EXEC,
+        //     MAP_PRIVATE | MAP_ANONYMOUS,
+        //     -1,
+        //     0,
+        // );
 
-        if func_memory.is_null() {
-            panic!("ALLOCATED MEMORY FOR A FUNCTION IS NULL");
-        }
+        // if func_memory.is_null() {
+        //     panic!("ALLOCATED MEMORY FOR A FUNCTION IS NULL");
+        // }
 
-        std::ptr::copy_nonoverlapping(buffer.as_ptr(), func_memory as *mut u8, buffer_size);
+        // std::ptr::copy_nonoverlapping(buffer.as_ptr(), func_memory as *mut u8, buffer_size);
         // link_functions(func_memory as *mut u8, buffer_size, called_funcs);
     }
 }
