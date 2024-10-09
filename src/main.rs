@@ -6,6 +6,7 @@ mod parts;
 mod stages;
 
 use crate::stages::{ir_compile::generate_ir,  linking::link_buffer, linking::sin};
+use std::f64::consts::PI;
 use std::fs::File;
 use std::io::{Write, Read, self, BufRead};
 use llvm_sys as llvm;
@@ -17,27 +18,20 @@ use llvm::target_machine::*;
 use std::ffi::{CString, CStr};
 use std::ptr;
 
-use libc::{c_void, mmap, PROT_READ, PROT_WRITE, PROT_EXEC, MAP_PRIVATE, MAP_ANONYMOUS};
+use libc::{c_void, mmap, PROT_READ, PROT_WRITE, PROT_EXEC, MAP_PRIVATE, MAP_ANONYMOUS, MAP_FAILED};
 
 fn main(){
     let page_size = unsafe { libc::sysconf(libc::_SC_PAGESIZE) } as usize;
-    // let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)");
-    // let (_llvm_ir, called_funcs) = generate_ir(&function);
-
     let mut file = File::open("example.o").unwrap();
     let mut temp_buffer = Vec::new();
     file.read_to_end(&mut temp_buffer).unwrap();
     
     let buffer: &mut [u8] = &mut temp_buffer;
 
-    // let fja = link_buffer(buffer, ptr::null_mut());
-    // let result = fja(0.57);
-    // println!("Result of the function: {}", result);
-
     let buffer_size = buffer.len();
 
     unsafe{
-        let aligned_size = (buffer_size + page_size - 1) & !(page_size - 1);
+        let aligned_size = 5*page_size;
         let func_memory = mmap(
             (sin as *mut u8).sub(0x40000) as *mut _,
             aligned_size,
@@ -46,22 +40,43 @@ fn main(){
             -1,
             0,
         );
-
-        if func_memory.is_null() {
+    
+        if func_memory == MAP_FAILED {
             panic!("ALLOCATED MEMORY FOR A FUNCTION IS NULL");
         }
-
+        
+        let fja: fn(f64) -> f64 = link_buffer(buffer, func_memory as *mut u8);
         std::ptr::copy_nonoverlapping(buffer.as_ptr(), func_memory as *mut u8, buffer_size);
-        let fja = link_buffer(buffer, func_memory as *mut u8);
-        let result = fja(0.57);
+        let result = fja(-PI/2.0);
         println!("Result of the function: {}", result);
     }
 }
 
+fn read_memory_map() -> io::Result<()> {
+    let pid = std::process::id(); // Get the current process ID
+    let maps_path = format!("/proc/{}/maps", pid);
+
+    if let Ok(file) = File::open(&maps_path) {
+        let reader = io::BufReader::new(file);
+
+        println!("Memory maps for process {}:", pid);
+        for line in reader.lines() {
+            if let Ok(map_entry) = line {
+                println!("{}", map_entry);
+            }
+        }
+    } else {
+        println!("Failed to open the memory map file: {}", maps_path);
+    }
+
+    Ok(())
+}
+
 // fn main(){
-//     let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)");
-//     let (llvm_ir, called_funcs) = generate_ir(&function);
-    
+//     let function = String::from("sin(x)");
+//     let llvm_ir = generate_ir(&function);
+
+//     let page_size = unsafe { libc::sysconf(libc::_SC_PAGESIZE) } as usize;
 //     let ir_c_string = CString::new(llvm_ir.clone()).unwrap();
 
 //     unsafe {
@@ -119,22 +134,35 @@ fn main(){
 //             return;
 //         }
 
-//         let buffer_start = LLVMGetBufferStart(memory_buffer) as *const u8;
+//         let buffer_start = LLVMGetBufferStart(memory_buffer) as *mut u8;
 //         let buffer_size = LLVMGetBufferSize(memory_buffer);
 
-//         let buffer_data = std::slice::from_raw_parts(buffer_start, buffer_size as usize);
-//         let mut file = File::create("example.o").unwrap();
-//         file.write(&buffer_data).unwrap();
-//         file.flush().unwrap();
+//         let buffer_data = std::slice::from_raw_parts_mut(buffer_start, buffer_size as usize);
 
-//         let func_memory = allocate_executable_memory(buffer_size);
-//         std::ptr::copy_nonoverlapping(buffer_start, func_memory as *mut u8, buffer_size);
+//         // if let Err(err) = read_memory_map() {
+//         //     eprintln!("Error reading memory map: {}", err);
+//         // }
 
-//         let fja: CompiledFunc = std::mem::transmute(func_memory);
+//         let aligned_size = 5*page_size;
+//         let func_memory = mmap(
+//             (sin as *mut u8).add(0x400) as *mut _,
+//             aligned_size,
+//             PROT_READ | PROT_WRITE | PROT_EXEC,
+//             MAP_PRIVATE | MAP_ANONYMOUS,
+//             -1,
+//             0,
+//         );
 
-//         let result = fja(0.57);
+//         if func_memory == MAP_FAILED {
+//             panic!("ALLOCATED MEMORY FOR A FUNCTION IS NULL");
+//         }
+
+//         println!("{:x} // {:x}", func_memory as u64, sin as u64);
+
+//         let fja: fn(f64) -> f64 = link_buffer(buffer_data, func_memory as *mut u8);
+//         std::ptr::copy_nonoverlapping(buffer_data.as_ptr(), func_memory as *mut u8, buffer_size);
+//         let result = fja(0.0);
 //         println!("Result of the function: {}", result);
-
 
 //         LLVMDisposeMemoryBuffer(memory_buffer);
 //         LLVMDisposeModule(module);

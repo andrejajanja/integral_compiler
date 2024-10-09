@@ -6,3 +6,6 @@ edition = "2021"
 [dependencies]
 llvm-sys = "160"
 libc = "0.2"
+
+[profile.dev]
+debug = true

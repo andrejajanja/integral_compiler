@@ -3,7 +3,7 @@ use std::process::exit;//, fs::read_to_string, fs::File, io::Write};
 use crate::parts::object_type_definitions::*;
 use crate::stages::string_to_tree_iterative::{string_to_vec_of_node, vec_infix_to_postfix};
 
-fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16, Vec<Func>){
+fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
     fn safely_pop_from_stacks(op_st: &mut Vec<i16>, cnst_st: &mut Vec<String>, one_two: bool) -> String{
         match op_st.pop() {
             Some(x) => {
@@ -42,7 +42,6 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16, Vec<Func>){
     }
 
     let mut unique_funcs: Vec<Func> = Vec::<Func>::new();
-    let mut called_queue: Vec<Func> = Vec::<Func>::new();
     let mut code = String::from("");
 
     let mut address: i16 = 0;
@@ -65,7 +64,6 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16, Vec<Func>){
                 let oper: String = safely_pop_from_stacks(&mut operand_stack, &mut const_stack, true);
                 address+=1;
                 code += &format!("\t%{} = call double @{}(double {}) nounwind\n", address, temp.op.ir_string(), oper);
-                called_queue.push(temp.op);
                 match temp.op {
                     Func::Ctg => {
                         address+=1;
@@ -115,14 +113,14 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16, Vec<Func>){
         }    
     }
 
-    (code, unique_funcs, address-1, called_queue)
+    (code, unique_funcs, address-1)
 }
 
-pub fn generate_ir(function: &String) -> (String, Vec<Func>){
+pub fn generate_ir(function: &String) -> String {
     let function_infix = string_to_vec_of_node(function);
     let function_postfix = vec_infix_to_postfix(function_infix);
 
-    let (mut func_code,functions_to_define, ret_addr, call_symbols) = compile_postfix(function_postfix);
+    let (mut func_code,functions_to_define, ret_addr) = compile_postfix(function_postfix);
     let mut code = String::from("");
 
     for elem in functions_to_define {
@@ -136,6 +134,6 @@ pub fn generate_ir(function: &String) -> (String, Vec<Func>){
     code += &func_code;
     code += &("\tret double %".to_owned() + &(ret_addr+1).to_string() + "\n}");
 
-    (code, call_symbols)
+    code
 }
 

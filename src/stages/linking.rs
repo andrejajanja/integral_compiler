@@ -82,7 +82,8 @@ fn resolve_relative_offset(symbol_offset: usize, symbol_name: &str, fc_offset: u
 
 pub fn link_buffer(buffer: &mut[u8], buffer_pointer: *mut u8) -> FunctionPtr{
 
-    let immutable_buffer: &[u8] = &buffer;
+    let immutable_buffer: &mut Vec<u8> = &mut vec![];
+    buffer.clone_into(immutable_buffer);
     let section_toff = u64::from_le_bytes(immutable_buffer[0x28..0x28 + 8].try_into().expect("Slice with incorrect length"));
     let entry_num_section_t = u16::from_le_bytes(immutable_buffer[0x3C..0x3C + 2].try_into().expect("Slice with incorrect length"));
     let string_index = u16::from_le_bytes(immutable_buffer[0x3E..0x3E + 2].try_into().expect("Slice with incorrect length"));
@@ -137,8 +138,13 @@ pub fn link_buffer(buffer: &mut[u8], buffer_pointer: *mut u8) -> FunctionPtr{
     if text_ == None {panic!("Text section wasn't found in the byte buffer provided as 'buffer: &[u8]' arguent");}
 
     let mut symbols = Vec::<&str>::new();
-    let fja_offset = parse_symbol_table(&mut symbols, sym_table, immutable_buffer, string_table_offset);
-    
+    let fja_offset = text_offset + parse_symbol_table(
+        &mut symbols,
+        sym_table,
+        immutable_buffer,
+        string_table_offset
+    );
+
     match rela_text{
         Some(r_text) => {
             let mut entry_offset = 0 as usize;
