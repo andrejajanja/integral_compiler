@@ -1,0 +1,10 @@
+[package]
+name = "prototype"
+version = "0.1.0"
+edition = "2021"
+
+build = "build.rs"
+
+[dependencies]
+llvm-sys = "160"
+libc = "0.2"

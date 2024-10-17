@@ -1,11 +1,7 @@
-[package]
-name = "Integral_Compiler"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = [
+    "prototype",
+    "production"
+]
 
-[dependencies]
-llvm-sys = "160"
-libc = "0.2"
-
-[profile.dev]
-debug = true
+resolver = "2"

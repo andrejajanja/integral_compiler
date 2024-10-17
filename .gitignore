@@ -1,6 +1,2 @@
-/target
-example.o
-exe
-IR_code.ll
-executable
-content.txt
+target
+prototype/example.o
