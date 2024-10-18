@@ -23,7 +23,14 @@ fn gen_3(){
 
 #[test]
 fn gen_4(){
-    let function = String::from("3*x+7");
+    let function = String::from("3.0*x+7.0");
     let root = str_to_tree_iter(&function);
     assert_eq!(tree_to_string_iter(&root), "+,Const,*,x,Const,")
+}
+
+#[test]
+fn gen_5(){
+    let function = String::from("x*exp(x)");
+    let root = str_to_tree_iter(&function);
+    assert_eq!(tree_to_string_iter(&root), "*,e^,x,x,")
 }

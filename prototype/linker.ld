@@ -67,7 +67,7 @@ SECTIONS
   }
   .reserved_block : {
     . = ALIGN(8);
-    __object_buffer = .;
+    __code_buffer = .;
     KEEP(*(.reserved_block))
     . = . + 16K;
     LONG(0);
@@ -180,7 +180,6 @@ SECTIONS
    /* Align here to ensure that the .bss section occupies space up to
       _end.  Align after .bss to ensure correct alignment even if the
       .bss section disappears because there are no input sections.
-      FIXME: Why do we need it? When there is no .bss section, we do not
       pad the .data section.  */
    . = ALIGN(. != 0 ? 64 / 8 : 1);
   }

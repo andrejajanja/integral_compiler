@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 use std::process::exit;
 use crate::parts::object_type_definitions::*;
+use crate::parts::terminal_decoration::Color;
+use crate::parts::error_types::CompilationError;
 
 use super::string_to_tree_recursive::print_tree_rec;
 
@@ -41,115 +43,118 @@ pub fn tree_to_string_iter(root: &Node) -> String {
     content
 }
 
-fn try_parsing(chunk: &str) -> Option<Node> {
+fn try_parsing(chunk: &str) -> Result<Option<Node>, CompilationError> {
     match chunk.len() {
         1 => {
             match &chunk[..]{
                 "*" => {
-                    return Some(Node::new_value(Func::Mul, None));
+                    return Ok(Some(Node::new_value(Func::Mul, None)));
                 }
 
                 "/" => {
-                    return Some(Node::new_value(Func::Div, None));
+                    return Ok(Some(Node::new_value(Func::Div, None)));
                 }
 
                 "+" => {
-                    return Some(Node::new_value(Func::Add, None));
+                    return Ok(Some(Node::new_value(Func::Add, None)));
                 }
 
                 "-" => {
-                    return Some(Node::new_value(Func::Sub, None));
+                    return Ok(Some(Node::new_value(Func::Sub, None)));
                 }
 
                 "^" => {
-                    return Some(Node::new_value(Func::Pow, None));
+                    return Ok(Some(Node::new_value(Func::Pow, None)));
                 }
 
                 "x" => {
-                    return Some(Node::new_value(Func::X, None));
+                    return Ok(Some(Node::new_value(Func::X, None)));
                 }
 
                 "(" => {
-                    return Some(Node::new_value(Func::Ob, None));
+                    return Ok(Some(Node::new_value(Func::Ob, None)));
                 }
 
                 ")" => {
-                    return Some(Node::new_value(Func::Cb, None));
+                    return Ok(Some(Node::new_value(Func::Cb, None)));
                 }
 
                 _ => {
-                    return None;
+                    return Ok(None);
                 }
             }
         }
         2 => {
             match &chunk[..]{
                 "ln" => {
-                    return Some(Node::new_value(Func::Ln, None));
+                    return Ok(Some(Node::new_value(Func::Ln, None)));
                 }
 
                 "e^" => {
-                    return Some(Node::new_value(Func::Exp, None));
+                    return Ok(Some(Node::new_value(Func::Exp, None)));
                 }
 
                 "tg" => {
-                    return Some(Node::new_value(Func::Tg, None));
+                    return Ok(Some(Node::new_value(Func::Tg, None)));
                 }
 
                 _ => {
-                    return None;
+                    return Ok(None);
                 }
             }
         }
         3 => {
             match &chunk[..]{
                 "sin" => {
-                    return Some(Node::new_value(Func::Sin, None));
+                    return Ok(Some(Node::new_value(Func::Sin, None)));
                 }
 
                 "cos" => {
-                    return Some(Node::new_value(Func::Cos, None));
+                    return Ok(Some(Node::new_value(Func::Cos, None)));
                 }
 
                 "ctg" => {
-                    return Some(Node::new_value(Func::Ctg, None));
+                    return Ok(Some(Node::new_value(Func::Ctg, None)));
                 }
 
                 "atg" => {
-                    return Some(Node::new_value(Func::Atg, None));
+                    return Ok(Some(Node::new_value(Func::Atg, None)));
+                }
+
+                "exp" => {
+                    return Ok(Some(Node::new_value(Func::Exp, None)));
                 }
                 
                 _ => {
-                    return None;
+                    return Ok(None);
                 }
             }
         }
         4 => {
             match &chunk[..]{
                 "sqrt" => {
-                    return Some(Node::new_value(Func::Sqrt, None));
+                    return Ok(Some(Node::new_value(Func::Sqrt, None)));
                 }
 
                 "asin" => {
-                    return Some(Node::new_value(Func::Asin, None));
+                    return Ok(Some(Node::new_value(Func::Asin, None)));
                 }
 
                 "acos" => {
-                    return Some(Node::new_value(Func::Acos, None));
+                    return Ok(Some(Node::new_value(Func::Acos, None)));
                 }
 
                 "actg" => {
-                    return Some(Node::new_value(Func::Actg, None));
+                    return Ok(Some(Node::new_value(Func::Actg, None)));
                 }
 
                 _ => {
-                    return None;
+                    return Ok(None);
                 }
             }
         }
         _ => {
-           println!("ERROR\nCouldn't parse part of the function string: {}\nLenght: {}\nCheck if you made a typo.", chunk,chunk.len());
-           exit(0);
+            return Err(CompilationError::ParsingError);
         }
     }
 }
@@ -175,15 +180,31 @@ pub fn string_to_vec_of_node(function: &str) -> Vec<Node> {
         let inter_node: Option<Node>;
 
         if i == temp{
-            inter_node = try_parsing(&function[i..i+buffer]);
+            inter_node = match try_parsing(&function[i..i+buffer]) {
+                Ok(value) => value,
+                Err(_e) => {
+                    print!("\n{}Error parsing highlighted part of a function string => {}{} {} {}\n\n",
+                    Color::CRed,
+                    Color::BBlack, Color::CYellow,
+                    &function.replace(&function[i..i+buffer], &format!("{}{} {} {}{}", Color::CBlack, Color::BYellow,&function[i..i+buffer], Color::CYellow, Color::BBlack)),
+                    Color::Reset
+                    );
+                    exit(1);
+                },
+            };
         }else {
             buffer-=1;
             inter_node = Some(Node::new_value(Func::Const, Some(
                 match function[i..i + buffer].parse::<f64>() {
                     Ok(c) => {c}
                     Err(_c) => {
-                        println!("\nFailed to parse a string to number, string in question:\n{}", &function[i..i + buffer]);
-                        exit(0);
+                        print!("\n{}Failed to parse a number => {}{} {} {}\n",
+                            Color::CRed,
+                            Color::BBlack, Color::CYellow,
+                            &function[i..i + buffer],
+                            Color::Reset
+                        );
+                        exit(1);
                     }
                 }
             )));
@@ -431,10 +452,7 @@ fn postfix_to_tree_verbose(list: &mut Vec<Node>) -> Node {
     list[0].clone()
 }
 
-//This implementation works on all of my test cases, but it can be further optimized, 
-//because all .contains operations are O(n) complexity. I feel that unary_ops can be implemented better.
 fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
-    //check if it's more efficient to format this differently
     let unary_ops = vec![Func::Sin,Func::Cos,Func::Tg,Func::Ctg,Func::Ln,Func::Exp,Func::Sqrt,Func::Atg,Func::Actg,Func::Asin,Func::Acos];
     match list.len() {
         0 => {
@@ -503,7 +521,7 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
     list[0].clone()
 }
 
-//Do profiling for all of the parts of this function, maybe frist line of the function can be optimized more.
+//TODO profiling for all of the parts of this function, maybe frist line of the function can be optimized more.
 pub fn str_to_tree_iter(function: &str) -> Node{
     let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));
     let root = postfix_to_tree(&mut list);

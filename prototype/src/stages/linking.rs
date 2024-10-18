@@ -1,11 +1,5 @@
-#![allow(unused_assignments)]
-
-use std::fmt::Error;
-
-use crate::parts::object_type_definitions::*;
-use libc::c_void;
-
-type CompiledFunc = extern "C" fn(f64) -> f64;
+use crate::parts::terminal_decoration::Color;
+use std::process::exit;
 
 pub fn sin(n: f64) -> f64{
     f64::sin(n)
@@ -23,7 +17,7 @@ pub fn tan(n: f64) -> f64{
     f64::tan(n)
 }
 
-type FunctionPtr = fn(f64) -> f64;
+pub type FunctionType = fn(f64) -> f64;
 
 fn parse_symbol_table<'a>(symbols: &mut Vec<&'a str>, sym_table: Option<&[u8]>, object_file_buffer: &'a [u8], string_table_start: usize) -> usize{
     let mut temp_fja_offset: u64 = u64::MAX;
@@ -80,7 +74,7 @@ fn resolve_relative_offset(symbol_offset: usize, symbol_name: &str, fc_offset: u
     }
 }
 
-pub fn link_buffer(buffer: &mut[u8], buffer_pointer: *mut u8) -> FunctionPtr{
+pub fn link_buffer(buffer: &mut[u8], buffer_pointer: *mut u8) -> FunctionType{
 
     let immutable_buffer: &mut Vec<u8> = &mut vec![];
     buffer.clone_into(immutable_buffer);
@@ -135,7 +129,10 @@ pub fn link_buffer(buffer: &mut[u8], buffer_pointer: *mut u8) -> FunctionPtr{
         entry_offset+=0x40;
     }
 
-    if text_ == None {panic!("Text section wasn't found in the byte buffer provided as 'buffer: &[u8]' arguent");}
+    if text_ == None {
+        print!("{}Text section wasn't found in the object file in the byte buffer{}\n", Color::CRed, Color::Reset);
+        exit(1)
+    }
 
     let mut symbols = Vec::<&str>::new();
     let fja_offset = text_offset + parse_symbol_table(
@@ -163,7 +160,7 @@ pub fn link_buffer(buffer: &mut[u8], buffer_pointer: *mut u8) -> FunctionPtr{
     }
 
     unsafe{
-        return std::mem::transmute::<*mut u8, FunctionPtr>(buffer_pointer.add(fja_offset));
+        return std::mem::transmute::<*mut u8, FunctionType>(buffer_pointer.add(fja_offset));
     }
 }
 
