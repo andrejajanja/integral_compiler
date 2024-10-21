@@ -1,6 +1,10 @@
 #![allow(dead_code)]
 
-use std::{io::stdin, process::exit};
+use std::{
+    io::stdin,
+    process::exit,
+    fs::read_to_string
+};
 
 pub fn print_help() {
     println!("
@@ -89,34 +93,24 @@ pub fn parse_inputs() -> (String, f64, f64, u64){
     (function, start, end, steps)
 }
 
+use serde::Deserialize;
 
-// #[macro_export()]
-// macro_rules! measure_time {
-//     ($code:block) => {{
-//         let start = Instant::now();
-//         let result = $code;
-//         let duration = start.elapsed();
+#[derive(Deserialize, Debug)]
+struct Config{
+    integral_config: IntegralConfig
+}
 
-//         println!("Time spent: {:?}", duration);
-//         result
-//     }};
-// }
+#[derive(Deserialize, Debug)]
+pub struct IntegralConfig{
+    pub function: String,
+    pub range_start: f64,
+    pub range_end: f64,
+    pub samples: u64
+}
 
-// fn _integral(a: f64, b: f64, steps: i64, fun: fn(f64) -> f64) -> f64 {
-//     if a > b {
-//         panic!("a value can't be bigger than b, see --help for instructions");
-//     };
-//     if a == b {
-//         return 0.0;
-//     };
-//     let mut s: f64 = 0.0;
-//     let dx: f64 = (b - a) / (steps as f64);
-//     for i in (0..steps).rev() {
-//         s += fun(a + (i as f64) * dx) * dx
-//     }
-//     s
-// }
 
-// fn _fun(x: f64) -> f64 {
-//     x.cos()
-// }
+pub fn parse_input_file(file_path: &str) -> IntegralConfig {
+    let config_content = read_to_string(file_path).expect("Failed to read config file");
+    let config: Config = toml::from_str(&config_content).expect("Failed to parse contents of config file");
+    return config.integral_config;
+}

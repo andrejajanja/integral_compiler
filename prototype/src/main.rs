@@ -3,13 +3,13 @@ mod components;
 mod stages;
 
 use crate::components::terminal_decoration::Color;
+use crate::components::auxilary_functions::parse_input_file;
 use crate::stages::{
     ir_compile::generate_ir,
     linking::link_buffer
 };
 use std::ffi::{CString, CStr};
 use std::ptr;
-use std::fs::read_to_string;
 use llvm_sys::{
     core::*,
     prelude::*,
@@ -22,11 +22,26 @@ extern "C" {
     static __code_buffer: u8;  // Start of the reserved block, size is 16KB
 }
 
+fn calculate_integral(fja: fn (f64) -> f64, r_start: f64, r_end: f64, samples: u64) -> f64 {
+    let mut x = r_start;
+    let dx = (r_end-r_start)/(samples as f64);
+    let mut sum = fja(r_start);
+
+    for _ in 0..samples-1{
+        x+=dx;
+        sum += fja(x);
+    }
+
+    sum*dx
+}
+
 fn main(){
-    let function = read_to_string("fun.txt").expect("Failed to read function from a file");
-    let llvm_ir = generate_ir(&function);
+    let parameters = parse_input_file("app_config.toml");
+
+    let llvm_ir = generate_ir(&parameters.function);
 
     let ir_c_string = CString::new(llvm_ir.clone()).unwrap();
+    let fja;
 
     unsafe {
         let context = LLVMContextCreate();
@@ -42,11 +57,15 @@ fn main(){
             unrecoverable_error!("LLVM Error | Error occured while parsing the IR string", *error);
         }
 
-        LLVM_InitializeAllTargetInfos();
-        LLVM_InitializeAllTargets();
-        LLVM_InitializeAllTargetMCs();
-        LLVM_InitializeAllAsmPrinters();
-        LLVM_InitializeAllAsmParsers();
+        let result = LLVM_InitializeNativeTarget();
+        if result != 0 {
+            unrecoverable_error!("LLVM Error | Initialization", "Failed to initialize native target.");
+        }
+
+        let result = LLVM_InitializeNativeAsmPrinter();
+        if result != 0 {
+            unrecoverable_error!("LLVM Error | Initialization", "Failed to initialize native assembler printer.");
+        }
 
         let triple = LLVMGetDefaultTargetTriple();
         let mut target: LLVMTargetRef = ptr::null_mut();
@@ -84,10 +103,8 @@ fn main(){
 
         let object_address: *const u8 = &__code_buffer;
 
-        let fja= link_buffer(buffer_data, object_address as *mut u8);
+        fja= link_buffer(buffer_data, object_address as *mut u8);
         std::ptr::copy_nonoverlapping(buffer_data.as_ptr(), object_address as *mut u8, buffer_size);
-        let result = fja(1.0);
-        print!("\nResult of the function: {}\n\n", result);
 
         LLVMDisposeMemoryBuffer(memory_buffer);
         LLVMDisposeModule(module);
@@ -95,6 +112,16 @@ fn main(){
         LLVMContextDispose(context);
         LLVMDisposeMessage(triple);
     }
+
+
+    let result = calculate_integral(
+        fja, 
+        parameters.range_start,
+    parameters.range_end,
+        parameters.samples
+    );
+
+    print!("\n\t{:.2}\n\t∫ {} dx = {:.10}\n\t{:.2}\n\n", parameters.range_end, &parameters.function, result, parameters.range_start);
 }
 
 #[cfg(test)]
