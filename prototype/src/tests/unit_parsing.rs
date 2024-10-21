@@ -34,3 +34,11 @@ fn gen_5(){
     let root = str_to_tree_iter(&function);
     assert_eq!(tree_to_string_iter(&root), "*,e^,x,x,")
 }
+
+#[test]
+#[should_panic]
+fn gen_6(){
+    let function = String::from("x*random(x)");
+    let root = str_to_tree_iter(&function);
+    assert_eq!(tree_to_string_iter(&root), "*,e^,x,x,")
+}

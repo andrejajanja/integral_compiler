@@ -1,11 +1,14 @@
 #![allow(temporary_cstring_as_ptr)]
-mod parts;
+mod components;
 mod stages;
 
+use crate::components::terminal_decoration::Color;
 use crate::stages::{
     ir_compile::generate_ir,
     linking::link_buffer
 };
+use std::ffi::{CString, CStr};
+use std::ptr;
 use std::fs::read_to_string;
 use llvm_sys::{
     core::*,
@@ -14,8 +17,6 @@ use llvm_sys::{
     target::*,
     target_machine::*
 };
-use std::ffi::{CString, CStr};
-use std::ptr;
 
 extern "C" {
     static __code_buffer: u8;  // Start of the reserved block, size is 16KB
@@ -38,9 +39,7 @@ fn main(){
         let mut module: LLVMModuleRef = ptr::null_mut();
         let mut error: *mut i8 = ptr::null_mut();
         if LLVMParseIRInContext(context, buffer, &mut module, &mut error) != 0 {
-            eprintln!("Error parsing IR: {:?}", error);
-            LLVMDisposeMessage(error);
-            return;
+            unrecoverable_error!("LLVM Error | Error occured while parsing the IR string", *error);
         }
 
         LLVM_InitializeAllTargetInfos();
@@ -53,9 +52,7 @@ fn main(){
         let mut target: LLVMTargetRef = ptr::null_mut();
 
         if LLVMGetTargetFromTriple(triple, &mut target, &mut error) != 0 {
-            eprintln!("Error getting target: {:?}", error);
-            LLVMDisposeMessage(error);
-            return;
+            unrecoverable_error!("LLVM Error | Error getting target information", *error);
         }
 
         let target_machine = LLVMCreateTargetMachine(
@@ -77,9 +74,7 @@ fn main(){
             &mut memory_buffer
         ) != 0{
             let error_message = CStr::from_ptr(error).to_string_lossy().into_owned();
-            eprintln!("Error emitting machine code to buffer: {:?}", error_message);
-            LLVMDisposeMessage(error);
-            return;
+            unrecoverable_error!("LLVM Error | Error emitting machine code to buffer", error_message);
         }
 
         let buffer_start = LLVMGetBufferStart(memory_buffer) as *mut u8;
@@ -92,7 +87,7 @@ fn main(){
         let fja= link_buffer(buffer_data, object_address as *mut u8);
         std::ptr::copy_nonoverlapping(buffer_data.as_ptr(), object_address as *mut u8, buffer_size);
         let result = fja(1.0);
-        println!("Result of the function: {}", result);
+        print!("\nResult of the function: {}\n\n", result);
 
         LLVMDisposeMemoryBuffer(memory_buffer);
         LLVMDisposeModule(module);

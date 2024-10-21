@@ -1,8 +1,8 @@
 #![allow(dead_code)]
-use std::process::exit;
-use crate::parts::object_type_definitions::*;
-use crate::parts::terminal_decoration::Color;
-use crate::parts::error_types::CompilationError;
+use crate::components::object_type_definitions::*;
+use crate::components::terminal_decoration::Color;
+use crate::components::error_types::CompilationError;
+use crate::unrecoverable_error;
 
 use super::string_to_tree_recursive::print_tree_rec;
 
@@ -132,22 +132,11 @@ fn try_parsing(chunk: &str) -> Result<Option<Node>, CompilationError> {
         }
         4 => {
             match &chunk[..]{
-                "sqrt" => {
-                    return Ok(Some(Node::new_value(Func::Sqrt, None)));
-                }
-
-                "asin" => {
-                    return Ok(Some(Node::new_value(Func::Asin, None)));
-                }
-
-                "acos" => {
-                    return Ok(Some(Node::new_value(Func::Acos, None)));
-                }
-
-                "actg" => {
-                    return Ok(Some(Node::new_value(Func::Actg, None)));
-                }
-
+                "sqrt" => return Ok(Some(Node::new_value(Func::Sqrt, None))),
+                "asin" => return Ok(Some(Node::new_value(Func::Asin, None))),
+                "acos" => return Ok(Some(Node::new_value(Func::Acos, None))),
+                "actg" => return Ok(Some(Node::new_value(Func::Actg, None))),
+                "atan" => return Ok(Some(Node::new_value(Func::Atg, None))),
                 _ => {
                     return Ok(None);
                 }
@@ -183,13 +172,10 @@ pub fn string_to_vec_of_node(function: &str) -> Vec<Node> {
             inter_node = match try_parsing(&function[i..i+buffer]) {
                 Ok(value) => value,
                 Err(_e) => {
-                    print!("\n{}Error parsing highlighted part of a function string => {}{} {} {}\n\n",
-                    Color::CRed,
-                    Color::BBlack, Color::CYellow,
-                    &function.replace(&function[i..i+buffer], &format!("{}{} {} {}{}", Color::CBlack, Color::BYellow,&function[i..i+buffer], Color::CYellow, Color::BBlack)),
-                    Color::Reset
+                    unrecoverable_error!(
+                        "Parsing Error | Highlighted part of a function string is unknown/unsupported function",
+                        &function.replace(&function[i..i+buffer], &format!("{}{} {} {}{}", Color::CBlack, Color::BYellow,&function[i..i+buffer], Color::CYellow, Color::BBlack))
                     );
-                    exit(1);
                 },
             };
         }else {
@@ -198,13 +184,7 @@ pub fn string_to_vec_of_node(function: &str) -> Vec<Node> {
                 match function[i..i + buffer].parse::<f64>() {
                     Ok(c) => {c}
                     Err(_c) => {
-                        print!("\n{}Failed to parse a number => {}{} {} {}\n",
-                            Color::CRed,
-                            Color::BBlack, Color::CYellow,
-                            &function[i..i + buffer],
-                            Color::Reset
-                        );
-                        exit(1);
+                        unrecoverable_error!("Parsing Error | Failed to parse a number in function string", &function[i..i + buffer]);
                     }
                 }
             )));
@@ -456,7 +436,10 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
     let unary_ops = vec![Func::Sin,Func::Cos,Func::Tg,Func::Ctg,Func::Ln,Func::Exp,Func::Sqrt,Func::Atg,Func::Actg,Func::Asin,Func::Acos];
     match list.len() {
         0 => {
-            panic!("Tree can't be generated due to list having no elements");
+            unrecoverable_error!(
+                "Static analysis Error | Error occured in during conversion of postfix form to tree",
+                "Tree can't be generated due to list having no elements."
+            );
         }
 
         1 => {

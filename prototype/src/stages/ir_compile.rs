@@ -1,6 +1,9 @@
 #![allow(dead_code)]
-use std::process::exit;//, fs::read_to_string, fs::File, io::Write};
-use crate::parts::object_type_definitions::*;
+use crate::unrecoverable_error;
+use crate::components::{
+    object_type_definitions::*,
+    terminal_decoration::Color
+};
 use crate::stages::string_to_tree_iterative::{string_to_vec_of_node, vec_infix_to_postfix};
 
 fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
@@ -15,8 +18,7 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
                                 temp = cnst.clone();
                             },
                             None => {
-                                println!("ERROR:\nNo constant on the const_stack, even though at least one was expected to be.");
-                                exit(0);
+                                unrecoverable_error!("Frontend error | During compiling of postfix form", "No constant on the const_stack, even though at least one was expected to be.");
                             }
                         }
                     },
@@ -31,12 +33,10 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
             },
             None => {
                 if one_two {
-                    println!("ERROR:\nNo operands on the stack, even though at least one was expected to be.");
+                    unrecoverable_error!("Frontend error | During compiling of postfix form", "No operands on the stack, even though at least one was expected to be.");
                 }else{
-                    println!("ERROR:\nNo operands on the stack, even though at least two were expected to be.");
+                    unrecoverable_error!("Frontend error | During compiling of postfix form", "No operands on the stack, even though at least two was expected to be.");
                 }
-    
-                exit(0);
             }
         }
     }
@@ -100,15 +100,15 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
                         operand_stack.push(-1);
                     }
                     None => {
-                        println!("ERROR: Logical error occured, Node is of op type 'Const', but c is None.");
-                        exit(0);
+                        unrecoverable_error!("Frontend error | During compiling of postfix form logical error occured","Node is of op type 'Const', but c is None.");
                     }
                 }            
             },
-            
             _ => {
-                println!("ERROR: Failed to compile function due unsupported node type '{}', in postfix form.", temp.op.to_string());
-                exit(0);
+                unrecoverable_error!(
+                    "Frontend error | During compiling of postfix form",
+                    format!("Failed to compile function due unsupported node type '{}', in postfix form.", temp.op.to_string())
+                );
             }
         }    
     }
@@ -130,10 +130,7 @@ pub fn generate_ir(function: &String) -> String {
         }
     }
 
-    code += "\ndefine double @fja(double %x){\n";
-    code += &func_code;
-    code += &("\tret double %".to_owned() + &(ret_addr+1).to_string() + "\n}");
-
+    code += &format!("\ndefine double @fja(double %x){{\n{}\tret double %{}\n}}", func_code, ret_addr+1);
     code
 }
 

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use std::process::exit;
 
-use crate::parts::object_type_definitions::*;
+use crate::components::object_type_definitions::*;
 
 pub fn print_tree_rec(node: &Node, tab: usize, addition: char) {
     match &node.op {

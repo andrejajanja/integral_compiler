@@ -1,21 +1,8 @@
-use crate::parts::terminal_decoration::Color;
-use std::process::exit;
-
-pub fn sin(n: f64) -> f64{
-    f64::sin(n)
-}
-
-pub fn cos(n: f64) -> f64{
-    f64::cos(n)
-}
-
-pub fn exp(n: f64) -> f64{
-    f64::exp(n)
-}
-
-pub fn tan(n: f64) -> f64{
-    f64::tan(n)
-}
+use crate::{
+    unrecoverable_error,
+    components::external_functions::*,
+    components::terminal_decoration::Color
+};
 
 pub type FunctionType = fn(f64) -> f64;
 
@@ -58,18 +45,23 @@ fn resolve_relative_offset(symbol_offset: usize, symbol_name: &str, fc_offset: u
                 Ok(value) => {
                     return ((fc_offset as i32) + value*8) - (symbol_offset as i32);
                 },
-                Err(e) => println!("Failed to parse usize: {}", e),
+                Err(e) => {unrecoverable_error!("Linker Error | failed to parse usize during the resolve of relative offset", e);}
             }
         }
     }
     unsafe {
         let pointer_addr = buffer_pointer.add(symbol_offset) as i32;
         match symbol_name{
-            "sin" => {return sin as i32 - pointer_addr}
-            "cos" => {return cos as i32 - pointer_addr}
-            "tan" => {return tan as i32 - pointer_addr}
-            "exp" => {return exp as i32 - pointer_addr}
-            _ => {panic!("Unrecognized provided symbol: {}", symbol_name);}
+            "sin" => {return sin as i32 - pointer_addr},
+            "cos" => {return cos as i32 - pointer_addr},
+            "tan" => {return tan as i32 - pointer_addr},
+            "exp" => {return exp as i32 - pointer_addr},
+            "ln" => {return ln as i32 - pointer_addr},
+            "asin" => {return asin as i32 - pointer_addr},
+            "acos" => {return acos as i32 - pointer_addr},
+            "atan" => {return atan as i32 - pointer_addr},
+            "sqrt" => {return sqrt as i32 - pointer_addr},
+            _ => {unrecoverable_error!("Linker Error | Unrecognized symbol in the external functions table", symbol_name);}
         }
     }
 }
@@ -123,15 +115,14 @@ pub fn link_buffer(buffer: &mut[u8], buffer_pointer: *mut u8) -> FunctionType{
                     _ => {}
                 }
             } else {
-                println!("No null terminator found in the section name.");
+                unrecoverable_error!("Linker Error | During analysis of ELF headers", "No null terminator found in the section name, check ELF byte buffer");
             }
         }
         entry_offset+=0x40;
     }
 
     if text_ == None {
-        print!("{}Text section wasn't found in the object file in the byte buffer{}\n", Color::CRed, Color::Reset);
-        exit(1)
+        unrecoverable_error!("Linker Error | Invalid result of ELF headers analisys", "Text section wasn't found in ELF byte buffer");
     }
 
     let mut symbols = Vec::<&str>::new();
@@ -152,11 +143,10 @@ pub fn link_buffer(buffer: &mut[u8], buffer_pointer: *mut u8) -> FunctionType{
                 let symbol_offset = text_offset+r_offset;
                 let offset = resolve_relative_offset(symbol_offset+4, symbols[r_index], fc_offset, buffer_pointer).to_le_bytes();
                 buffer[symbol_offset..symbol_offset+4].copy_from_slice(&offset[..4]);
-                // println!("Offset: 0x{:x} - Symbol: {}", resolve_relative_offset(symbol_offset+4, symbols[r_index], fc_offset, buffer_pointer), symbols[r_index]);
                 entry_offset+=24;
             }
         },
-        None =>  {panic!("Relative text section wasn't found in the byte buffer provided as 'buffer: &[u8]' arguent");}
+        None =>  {unrecoverable_error!("Linker Error | Invalid result of ELF headers analisys", "Relative text section wasn't found in the ELF byte buffer");}
     }
 
     unsafe{
