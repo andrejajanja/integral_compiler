@@ -1,3 +1,4 @@
 target
 prototype/example.o
 app_config.toml
+perf.data*

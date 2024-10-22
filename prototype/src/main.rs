@@ -2,14 +2,20 @@
 mod components;
 mod stages;
 
+extern crate libc;
+
 use crate::components::terminal_decoration::Color;
 use crate::components::auxilary_functions::parse_input_file;
 use crate::stages::{
     ir_compile::generate_ir,
     linking::link_buffer
 };
-use std::ffi::{CString, CStr};
-use std::ptr;
+use std::{
+    ffi::{CString, CStr},
+    ptr,
+    thread,
+    sync::mpsc
+};
 use llvm_sys::{
     core::*,
     prelude::*,
@@ -113,13 +119,29 @@ fn main(){
         LLVMDisposeMessage(triple);
     }
 
+    // let result = calculate_integral(fja, parameters.range_start, parameters.range_end, parameters.samples);
 
-    let result = calculate_integral(
-        fja, 
-        parameters.range_start,
-    parameters.range_end,
-        parameters.samples
-    );
+    let thread_n = 4 as u64;
+    let chunk_size = (parameters.range_end-parameters.range_start)/(thread_n as f64);
+    let chunk_samples = parameters.samples/thread_n;
+
+    let (tx, rx) = mpsc::channel();
+
+    for i in 0..thread_n {
+        let tx = tx.clone();
+        let r_start_thread = parameters.range_start + i as f64 * chunk_size;
+        let r_end_thread = parameters.range_start + (i + 1) as f64 * chunk_size;
+        thread::spawn(move || {
+            let temp_result = calculate_integral(fja, r_start_thread, r_end_thread, chunk_samples);
+            tx.send(temp_result).expect("Failed to send result");
+        });
+    }
+
+    // Collect results from the threads
+    let mut result = 0.0;
+    for _ in 0..thread_n {
+        result += rx.recv().expect("Failed to receive result");
+    }
 
     print!("\n\t{:.2}\n\t∫ {} dx = {:.10}\n\t{:.2}\n\n", parameters.range_end, &parameters.function, result, parameters.range_start);
 }
