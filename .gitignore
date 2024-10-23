@@ -1,4 +1,5 @@
 target
 prototype/example.o
 app_config.toml
-perf.data*
+benchmarks
+parameters_list.txt
