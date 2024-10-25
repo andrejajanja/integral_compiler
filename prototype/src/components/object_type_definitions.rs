@@ -1,4 +1,5 @@
 use crate::{components::terminal_decoration::Color, unrecoverable_error};
+use std::process::exit;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Func {

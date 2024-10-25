@@ -4,6 +4,8 @@ use crate::{
     components::terminal_decoration::Color
 };
 
+use std::process::exit;
+
 pub type FunctionType = fn(f64) -> f64;
 
 fn parse_symbol_table<'a>(symbols: &mut Vec<&'a str>, sym_table: Option<&[u8]>, object_file_buffer: &'a [u8], string_table_start: usize) -> usize{

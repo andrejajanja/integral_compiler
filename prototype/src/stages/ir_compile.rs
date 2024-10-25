@@ -5,6 +5,7 @@ use crate::components::{
     terminal_decoration::Color
 };
 use crate::stages::string_to_tree_iterative::{string_to_vec_of_node, vec_infix_to_postfix};
+use std::process::exit;
 
 fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
     fn safely_pop_from_stacks(op_st: &mut Vec<i16>, cnst_st: &mut Vec<String>, one_two: bool) -> String{

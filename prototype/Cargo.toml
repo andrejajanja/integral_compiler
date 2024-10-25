@@ -17,3 +17,7 @@ criterion = "0.4"
 [[bench]]
 name = "performance"
 harness = false
+
+[lib]
+name = "prototype"
+path = "src/lib.rs"

@@ -3,6 +3,7 @@ use crate::components::object_type_definitions::*;
 use crate::components::terminal_decoration::Color;
 use crate::components::error_types::CompilationError;
 use crate::unrecoverable_error;
+use std::process::exit;
 
 use super::string_to_tree_recursive::print_tree_rec;
 

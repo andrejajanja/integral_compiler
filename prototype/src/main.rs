@@ -13,8 +13,7 @@ use crate::stages::{
 use std::{
     ffi::{CString, CStr},
     ptr,
-    thread,
-    sync::mpsc
+    process::exit
 };
 use llvm_sys::{
     core::*,
@@ -28,21 +27,21 @@ extern "C" {
     static __code_buffer: u8;  // Start of the reserved block, size is 16KB
 }
 
-fn calculate_integral(fja: fn (f64) -> f64, r_start: f64, r_end: f64, samples: u64) -> f64 {
-    let mut x = r_start;
-    let dx = (r_end-r_start)/(samples as f64);
-    let mut sum = fja(r_start);
+// fn calculate_integral(fja: fn (f64) -> f64, r_start: f64, r_end: f64, samples: u64) -> f64 {
+//     let mut x = r_start;
+//     let dx = (r_end-r_start)/(samples as f64);
+//     let mut sum = fja(r_start);
 
-    for _ in 0..samples-1{
-        x+=dx;
-        sum += fja(x);
-    }
+//     for _ in 0..samples-1{
+//         x+=dx;
+//         sum += fja(x);
+//     }
 
-    sum*dx
-}
+//     sum*dx
+// }
 
 fn main(){
-    let parameters = parse_input_file("app_config.toml");
+    let parameters = parse_input_file("./app_config.toml");
 
     let llvm_ir = generate_ir(&parameters.function);
 
@@ -119,31 +118,7 @@ fn main(){
         LLVMDisposeMessage(triple);
     }
 
-    let result = calculate_integral(fja, parameters.range_start, parameters.range_end, parameters.samples);
-
-    // let thread_n = 4 as u64;
-    // let chunk_size = (parameters.range_end-parameters.range_start)/(thread_n as f64);
-    // let chunk_samples = parameters.samples/thread_n;
-
-    // let (tx, rx) = mpsc::channel();
-
-    // for i in 0..thread_n {
-    //     let tx = tx.clone();
-    //     let r_start_thread = parameters.range_start + i as f64 * chunk_size;
-    //     let r_end_thread = parameters.range_start + (i + 1) as f64 * chunk_size;
-    //     thread::spawn(move || {
-    //         let temp_result = calculate_integral(fja, r_start_thread, r_end_thread, chunk_samples);
-    //         tx.send(temp_result).expect("Failed to send result");
-    //     });
-    // }
-
-    // // Collect results from the threads
-    // let mut result = 0.0;
-    // for _ in 0..thread_n {
-    //     result += rx.recv().expect("Failed to receive result");
-    // }
-
-    print!("\n\t{:.2}\n\t∫ {} dx = {:.10}\n\t{:.2}\n\n", parameters.range_end, &parameters.function, result, parameters.range_start);
+    println!("Result: {}", fja(2.0));
 }
 
 #[cfg(test)]
