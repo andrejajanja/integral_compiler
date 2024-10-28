@@ -35,8 +35,8 @@ fn calculate_integral(fja: fn (f64) -> f64, r_start: f64, r_end: f64, samples: u
     let dx = (r_end-r_start)/(samples as f64);
     let mut sum = fja(r_start);
 
-    for _ in 0..samples-1{
-        x+=dx;
+    for _ in 0..samples{
+        x += dx;
         sum += fja(x);
     }
 

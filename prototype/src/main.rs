@@ -1,124 +1,63 @@
 #![allow(temporary_cstring_as_ptr)]
+
 mod components;
 mod stages;
 
-extern crate libc;
-
-use crate::components::terminal_decoration::Color;
-use crate::components::auxilary_functions::parse_input_file;
-use crate::stages::{
-    ir_compile::generate_ir,
-    linking::link_buffer
-};
 use std::{
-    ffi::{CString, CStr},
-    ptr,
-    process::exit
-};
-use llvm_sys::{
-    core::*,
-    prelude::*,
-    ir_reader::LLVMParseIRInContext,
-    target::*,
-    target_machine::*
+    env::args,
+    time::Instant,
+    arch::x86_64::*
 };
 
 extern "C" {
     static __code_buffer: u8;  // Start of the reserved block, size is 16KB
 }
 
-// fn calculate_integral(fja: fn (f64) -> f64, r_start: f64, r_end: f64, samples: u64) -> f64 {
-//     let mut x = r_start;
-//     let dx = (r_end-r_start)/(samples as f64);
-//     let mut sum = fja(r_start);
+#[target_feature(enable = "avx")]
+unsafe fn simd_sin(x: __m256d) -> __m256d{
+    let mut value = x;
+    let xsq = _mm256_mul_pd(x, x);
+    let x3rd = _mm256_mul_pd(xsq, x);
+    let x5th = _mm256_mul_pd(x3rd, x);
+    value = _mm256_fmadd_pd(x3rd, _mm256_set1_pd(-0.166666667), value);
+    _mm256_fmadd_pd(x5th, _mm256_set1_pd(0.008333333), value)
+}
 
-//     for _ in 0..samples-1{
-//         x+=dx;
-//         sum += fja(x);
-//     }
+#[target_feature(enable = "avx")]
+unsafe fn do_simd_math(num: u64, adds: u64) -> __m256d{
+    let mut result = _mm256_set1_pd(0.0);
+    for _ in 0..num {
+        let mut a = _mm256_set1_pd(3.14/4.0);
+        // let b = _mm256_set1_pd(1.5);
 
-//     sum*dx
-// }
+        for _ in 0..adds{
+            a = simd_sin(a);
+        }
+        result = a;        
+    }
+    result
+}
 
 fn main(){
-    let parameters = parse_input_file("./app_config.toml");
 
-    let llvm_ir = generate_ir(&parameters.function);
+    let args: Vec<String> = args().collect();
 
-    let ir_c_string = CString::new(llvm_ir.clone()).unwrap();
-    let fja;
+    let num = match args[1].parse::<u64>(){
+        Ok(num) => num,
+        Err(_) => panic!("BAD USIZE VALUE FOR LOOP ITERATIONS"),
+    };
 
-    unsafe {
-        let context = LLVMContextCreate();
-        let buffer = LLVMCreateMemoryBufferWithMemoryRangeCopy(
-            ir_c_string.as_ptr(),
-            llvm_ir.len(), 
-            CString::new("LLVM IR").unwrap().as_ptr()
-        );
+    let adds = match args[2].parse::<u64>(){
+        Ok(num) => num,
+        Err(_) => panic!("BAD F64 VALUE"),
+    };
 
-        let mut module: LLVMModuleRef = ptr::null_mut();
-        let mut error: *mut i8 = ptr::null_mut();
-        if LLVMParseIRInContext(context, buffer, &mut module, &mut error) != 0 {
-            unrecoverable_error!("LLVM Error | Error occured while parsing the IR string", *error);
-        }
+    let start = Instant::now();
+    let result = unsafe {do_simd_math(num, adds)};
 
-        let result = LLVM_InitializeNativeTarget();
-        if result != 0 {
-            unrecoverable_error!("LLVM Error | Initialization", "Failed to initialize native target.");
-        }
-
-        let result = LLVM_InitializeNativeAsmPrinter();
-        if result != 0 {
-            unrecoverable_error!("LLVM Error | Initialization", "Failed to initialize native assembler printer.");
-        }
-
-        let triple = LLVMGetDefaultTargetTriple();
-        let mut target: LLVMTargetRef = ptr::null_mut();
-
-        if LLVMGetTargetFromTriple(triple, &mut target, &mut error) != 0 {
-            unrecoverable_error!("LLVM Error | Error getting target information", *error);
-        }
-
-        let target_machine = LLVMCreateTargetMachine(
-            target,
-            triple,
-            CString::new("generic").unwrap().as_ptr(),
-            CString::new("").unwrap().as_ptr(),
-            LLVMCodeGenOptLevel::LLVMCodeGenLevelAggressive,
-            LLVMRelocMode::LLVMRelocDefault,
-            LLVMCodeModel::LLVMCodeModelDefault
-        );
-
-        let mut memory_buffer: LLVMMemoryBufferRef = ptr::null_mut();
-        if LLVMTargetMachineEmitToMemoryBuffer(
-            target_machine,
-            module,
-            LLVMCodeGenFileType::LLVMObjectFile,
-            &mut error,
-            &mut memory_buffer
-        ) != 0{
-            let error_message = CStr::from_ptr(error).to_string_lossy().into_owned();
-            unrecoverable_error!("LLVM Error | Error emitting machine code to buffer", error_message);
-        }
-
-        let buffer_start = LLVMGetBufferStart(memory_buffer) as *mut u8;
-        let buffer_size = LLVMGetBufferSize(memory_buffer);
-
-        let buffer_data = std::slice::from_raw_parts_mut(buffer_start, buffer_size as usize);
-
-        let object_address: *const u8 = &__code_buffer;
-
-        fja= link_buffer(buffer_data, object_address as *mut u8);
-        std::ptr::copy_nonoverlapping(buffer_data.as_ptr(), object_address as *mut u8, buffer_size);
-
-        LLVMDisposeMemoryBuffer(memory_buffer);
-        LLVMDisposeModule(module);
-        LLVMDisposeTargetMachine(target_machine);
-        LLVMContextDispose(context);
-        LLVMDisposeMessage(triple);
-    }
-
-    println!("Result: {}", fja(2.0));
+    let duration = start.elapsed();
+    println!("Value: {:?}\n Elapsed: {:?}ns", result, duration.as_nanos()/(num*adds) as u128);
+    
 }
 
 #[cfg(test)]

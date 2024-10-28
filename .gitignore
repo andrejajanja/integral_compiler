@@ -3,3 +3,5 @@ prototype/example.o
 app_config.toml
 benchmarks
 parameters_list.txt
+cpu_feature_list.txt
+taylors.png
