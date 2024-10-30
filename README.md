@@ -1,9 +1,6 @@
 # Numerical Integral Approximation Using Compiler Based Approach
 
-<div style = "
-display: flex;
-flex-direction: row;
-">
+<div style = "display: flex; flex-direction: row;">
     <img src = "https://logodix.com/logo/1784092.jpg" style = "width: 100%; height: 100%; margin-right: 2rem;">
     <img src = "https://th.bing.com/th/id/OIP.tNft0ETIabqB2AtBx7ZQJwHaE8?rs=1&pid=ImgDetMain" style = "width: 45.65%;">
 </div>
