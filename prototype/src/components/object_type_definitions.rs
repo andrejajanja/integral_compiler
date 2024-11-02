@@ -1,6 +1,7 @@
 use crate::{components::terminal_decoration::Color, unrecoverable_error};
 use std::process::exit;
 
+//TODO Add hyperbolic functions to this enum
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Func {
     //unary operators
@@ -24,12 +25,12 @@ pub enum Func {
     Pow,    // g(x)^(f(x))
 
     //brackets
-    Ob, //opne bracket
+    Ob, //open bracket
     Cb, //closed bracket
 
     //auxilary
     X,      //function variable
-    Const,  // C, CeR
+    Const,  // C, C e R
     None,   // end of the tree
 }
 
