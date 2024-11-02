@@ -10,36 +10,73 @@ use std::{
 //TODO write description for everything defined for this struct
 #[derive(Debug, Clone)]
 pub struct TsPoly {
-    pub coefs: Vec<f64>,
-    pub offset: f64
+    pub coefs: Vec<f64>
 }
 
 impl TsPoly{
     pub(crate) const DEFAULT_POW: usize = 30;
 
-    pub fn from_func(fun: Func, offset: f64) -> TsPoly{
-        let mut temp = TsPoly { coefs: vec![0.0; TsPoly::DEFAULT_POW], offset: offset};
+    pub fn from_func(fun: Func, mut offset: f64) -> TsPoly{
+        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_POW]};
         
         match fun{
-            Func::Sin => TsPoly::generate_sin(&mut temp, offset),
-            Func::Cos => TsPoly::generate_cos(&mut temp, offset),
+            Func::Sin => Self::generate_sin(&mut temp, offset),
+            Func::Cos => Self::generate_cos(&mut temp, offset),
             Func::Tg => todo!(),
             Func::Ctg => todo!(),
-            Func::Ln => todo!(),
-            Func::Exp => TsPoly::generate_exp(&mut temp, offset),
+            Func::Ln => todo!(),//Self::generate_ln(&mut temp, offset),
+            Func::Exp => Self::generate_exp(&mut temp, offset),
             Func::Atg => todo!(),
             Func::Actg => todo!(),
             Func::Asin => todo!(),
             Func::Acos => todo!(),
             _ => {
-                unrecoverable_error!(
-                    "Frontend error | Can't/Shouldn't generate Taylor's polynomial for this Func value",
-                    format!("{:?}", fun)
-                );
+                unrecoverable_error!("Frontend error | Can't/Shouldn't generate Taylor's polynomial for this Func value", fun);
+            }
+        }
+
+        if offset == 0.0{
+            return temp;
+        }
+
+        offset = -offset;
+
+        //TODO offseting the polynomial doesn't garantee the percision gains, here is the error, probably
+        for power in 1..Self::DEFAULT_POW{
+            if temp.coefs[power] != 0.0 {
+                let current_coef = temp.coefs[power];
+                temp.coefs[0] += current_coef*offset.powi(power as i32);
+                for index in 1..power{
+                    temp.coefs[power-index] += current_coef*Self::binomial_coef(power, index)*offset.powi(index as i32);
+                }
             }
         }
 
         temp
+    }
+
+    pub fn truncate(&mut self, max: usize){
+        for index in max+1..Self::DEFAULT_POW{
+            self.coefs[index] = 0.0;
+        }
+    }
+
+    fn binomial_coef(n: usize, k: usize) -> f64{
+        if k > n {
+            return 0.0;
+        }
+        if k == 0 || k == n {
+            return 1.0;
+        }
+    
+        let k = if k > n - k { n - k } else { k };
+        let mut result = 1;
+    
+        for i in 0..k {
+            result = result * (n - i) / (i + 1);
+        }
+    
+        result as f64
     }
 }
 
@@ -49,13 +86,9 @@ impl Add for TsPoly{
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        if self.offset != rhs.offset {
-            unrecoverable_error!("Frontend error | Can't add two TsPolys with different offsets", format!("Left's offset: {}, Right's offset: {}", self.offset, rhs.offset));
-        }
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_POW]};
 
-        let mut temp = TsPoly{coefs: vec![0.0; TsPoly::DEFAULT_POW], offset: self.offset};
-
-        for i in 0..TsPoly::DEFAULT_POW{
+        for i in 0..Self::DEFAULT_POW{
             temp.coefs[i] = self.coefs[i] + rhs.coefs[i];
         }
 
@@ -65,11 +98,7 @@ impl Add for TsPoly{
 
 impl AddAssign for TsPoly{
     fn add_assign(&mut self, rhs: Self) {
-        if self.offset != rhs.offset {
-            unrecoverable_error!("Frontend error | Can't add two TsPolys with different offsets", format!("Left's offset: {}, Right's offset: {}", self.offset, rhs.offset));
-        }
-
-        for i in 0..TsPoly::DEFAULT_POW{
+        for i in 0..Self::DEFAULT_POW{
             self.coefs[i]+=rhs.coefs[i];
         }
     }
@@ -79,13 +108,9 @@ impl Sub for TsPoly{
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        if self.offset != rhs.offset {
-            unrecoverable_error!("Frontend error | Can't subtract two TsPolys with different offsets", format!("Left's offset: {}, Right's offset: {}", self.offset, rhs.offset));
-        }
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_POW]};
 
-        let mut temp = TsPoly{coefs: vec![0.0; TsPoly::DEFAULT_POW], offset: self.offset};
-
-        for i in 0..TsPoly::DEFAULT_POW{
+        for i in 0..Self::DEFAULT_POW{
             temp.coefs[i] = self.coefs[i] - rhs.coefs[i];
         }
 
@@ -95,11 +120,7 @@ impl Sub for TsPoly{
 
 impl SubAssign for TsPoly{
     fn sub_assign(&mut self, rhs: Self) {
-        if self.offset != rhs.offset {
-            unrecoverable_error!("Frontend error | Can't subtract two TsPolys with different offsets", format!("Left's offset: {}, Right's offset: {}", self.offset, rhs.offset));
-        }
-
-        for i in 0..TsPoly::DEFAULT_POW{
+        for i in 0..Self::DEFAULT_POW{
             self.coefs[i]-=rhs.coefs[i];
         }
     }
@@ -109,16 +130,12 @@ impl Mul for TsPoly{
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output{
-        if self.offset != rhs.offset {
-            unrecoverable_error!("Frontend error | Can't multiply two TsPolys with different offsets", format!("Left's offset: {}, Right's offset: {}", self.offset, rhs.offset));
-        }
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_POW]};
 
-        let mut temp = TsPoly{coefs: vec![0.0; TsPoly::DEFAULT_POW], offset: self.offset};
-
-        for i_lhs in 0..TsPoly::DEFAULT_POW{
-            for i_rhs in 0..TsPoly::DEFAULT_POW{
+        for i_lhs in 0..Self::DEFAULT_POW{
+            for i_rhs in 0..Self::DEFAULT_POW{
                 let end_index = i_lhs + i_rhs;
-                if end_index > TsPoly::DEFAULT_POW - 1 { 
+                if end_index > Self::DEFAULT_POW - 1 { 
                     break; 
                 }
                 temp.coefs[end_index] += self.coefs[i_lhs] * rhs.coefs[i_rhs];
@@ -131,14 +148,10 @@ impl Mul for TsPoly{
 
 impl MulAssign for TsPoly{
     fn mul_assign(&mut self, rhs: Self) {
-        if self.offset != rhs.offset {
-            unrecoverable_error!("Frontend error | Can't multiply two TsPolys with different offsets", format!("Left's offset: {}, Right's offset: {}", self.offset, rhs.offset));
-        }
-
-        for i_lhs in 0..TsPoly::DEFAULT_POW{
-            for i_rhs in 0..TsPoly::DEFAULT_POW{
+        for i_lhs in 0..Self::DEFAULT_POW{
+            for i_rhs in 0..Self::DEFAULT_POW{
                 let end_index = i_lhs + i_rhs;
-                if end_index >= TsPoly::DEFAULT_POW { 
+                if end_index >= Self::DEFAULT_POW { 
                     break; 
                 }
                 self.coefs[end_index] += self.coefs[i_lhs] * rhs.coefs[i_rhs];
@@ -153,20 +166,13 @@ impl fmt::Display for TsPoly{
 
         let mut started = false;
 
-        let monome;
-        if self.offset == 0.0 {
-            monome = String::from("x");
-        }else{
-            monome = format!("(x-{})", self.offset);
-        }
-
-        for index in (0..TsPoly::DEFAULT_POW).rev(){
+        for index in (0..Self::DEFAULT_POW).rev(){
             if self.coefs[index] == 0.0 {
                 continue;
             }
 
             if started && self.coefs[index] > 0.0{
-                temp_str += "+";
+                temp_str += " + ";
             }
 
             if self.coefs[index] != 1.0 {
@@ -182,14 +188,14 @@ impl fmt::Display for TsPoly{
                     if self.coefs[index] != 1.0{
                         temp_str += "*";
                     }
-                    temp_str += &monome;
+                    temp_str += "x";
                 },
                 _ => {
                     if self.coefs[index] != 1.0{
                         temp_str += "*";
                     }
-                    temp_str += &monome;
-                    temp_str += "^";
+
+                    temp_str += "x^";
                     temp_str += &index.to_string();
                 }
             }

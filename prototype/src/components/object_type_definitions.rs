@@ -1,5 +1,8 @@
 use crate::{components::terminal_decoration::Color, unrecoverable_error};
-use std::process::exit;
+use std::{
+    fmt,
+    process::exit
+};
 
 //TODO Add hyperbolic functions to this enum
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -34,33 +37,6 @@ pub enum Func {
     None,   // end of the tree
 }
 
-impl ToString for Func {
-    fn to_string(&self) -> String {
-        match self{
-            Func::Add => String::from("+"),
-            Func::Sub => String::from("-"),
-            Func::Mul => String::from("*"),
-            Func::Div => String::from("/"),
-            Func::Pow => String::from("^"),
-            Func::X => String::from("x"),
-            Func::None => String::from("None"),
-            Func::Sin => String::from("sin"),
-            Func::Cos => String::from("cos"),
-            Func::Tg => String::from("tg"),
-            Func::Ctg => String::from("ctg"),
-            Func::Ln => String::from("ln"),
-            Func::Exp => String::from("e^"),
-            Func::Sqrt => String::from("sqrt"),
-            Func::Const => String::from("Const"),
-            Func::Atg => String::from("arctg"),
-            Func::Asin => String::from("arcsin"),
-            Func::Acos => String::from("arccos"),
-            Func::Actg => String::from("arcctg"),
-            Func::Ob => String::from("("),
-            Func::Cb => String::from(")")
-        }
-    }
-}
 
 impl Func {
     pub fn ir_string(&self) -> String {
@@ -86,6 +62,36 @@ impl Func {
                 );
             },
         }
+    }
+}
+
+impl fmt::Display for Func {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let temp: String = match self{
+            Func::Add => String::from("+"),
+            Func::Sub => String::from("-"),
+            Func::Mul => String::from("*"),
+            Func::Div => String::from("/"),
+            Func::Pow => String::from("^"),
+            Func::X => String::from("x"),
+            Func::None => String::from("None"),
+            Func::Sin => String::from("sin"),
+            Func::Cos => String::from("cos"),
+            Func::Tg => String::from("tg"),
+            Func::Ctg => String::from("ctg"),
+            Func::Ln => String::from("ln"),
+            Func::Exp => String::from("e^"),
+            Func::Sqrt => String::from("sqrt"),
+            Func::Const => String::from("Const"),
+            Func::Atg => String::from("arctg"),
+            Func::Asin => String::from("arcsin"),
+            Func::Acos => String::from("arccos"),
+            Func::Actg => String::from("arcctg"),
+            Func::Ob => String::from("("),
+            Func::Cb => String::from(")")
+        };
+
+        write!(f, "{}", temp)
     }
 }
 

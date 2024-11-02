@@ -8,6 +8,7 @@ use std::{
     arch::x86_64::*
 };
 
+use prototype::components::object_type_definitions::Func;
 use prototype::stages::polynomials::TsPoly;
 
 extern "C" {
@@ -58,17 +59,9 @@ fn main(){
     // let duration = start.elapsed();
     // println!("Value: {:?}\n Elapsed: {:?}ns", result, duration.as_nanos()/(num*adds) as u128);
     
-    let mut a = TsPoly{coefs: vec![0.0; 30], offset: 1.2};
-    let mut b = TsPoly{coefs: vec![0.0; 30], offset: 1.2};
-
-    a.coefs[0] = 2.0;
-    a.coefs[1] = 2.0;
-    b.coefs[0] = 1.0;
-    b.coefs[1] = 2.0;
-
-    let c = a*b;
-
-    println!("{}", c);
+    let mut a  = TsPoly::from_func(Func::Exp, 3.0);
+    a.truncate(5);
+    println!("y = {}", a);
 }
 
 #[cfg(test)]
