@@ -14,18 +14,40 @@ pub struct TsPoly {
 }
 
 impl TsPoly{
-    pub(crate) const DEFAULT_POW: usize = 30;
+    pub(crate) const DEFAULT_MAX_POW: usize = 30;
 
-    pub fn from_func(fun: Func, mut offset: f64) -> TsPoly{
-        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_POW]};
+    pub fn test(&mut self, mut offset: f64) {
+        offset = -offset;
+
+        //FIXME offseting the polynomial doesn't garantee the percision gains, here is the error, probably
+        for power in 1..Self::DEFAULT_MAX_POW{
+            if self.coefs[power] != 0.0 {
+                let current_coef = self.coefs[power];
+                self.coefs[0] += current_coef*offset.powi(power as i32);
+                for index in 1..power{
+                    self.coefs[power-index] += current_coef*Self::binomial_coef(power, index)*offset.powi(index as i32);
+                }
+            }
+        }
+    }
+
+    pub fn from_func(fun: Func, mut offset: f64, max_p: usize) -> TsPoly{
+        if max_p >= Self::DEFAULT_MAX_POW {
+            unrecoverable_error!(
+                "Frontend error | Invalid argument max_p when generating Taylor's polynomial",
+                format!("max_p({}) >= DEFAULT_MAX_POW({})", max_p, Self::DEFAULT_MAX_POW-1)
+            );
+        }
+
+        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
         
         match fun{
-            Func::Sin => Self::generate_sin(&mut temp, offset),
-            Func::Cos => Self::generate_cos(&mut temp, offset),
+            Func::Sin => Self::generate_sin(&mut temp, &mut offset, max_p),
+            Func::Cos => Self::generate_cos(&mut temp, &mut offset, max_p),
             Func::Tg => todo!(),
             Func::Ctg => todo!(),
             Func::Ln => todo!(),//Self::generate_ln(&mut temp, offset),
-            Func::Exp => Self::generate_exp(&mut temp, offset),
+            Func::Exp => Self::generate_exp(&mut temp, offset, max_p),
             Func::Atg => todo!(),
             Func::Actg => todo!(),
             Func::Asin => todo!(),
@@ -41,13 +63,12 @@ impl TsPoly{
 
         offset = -offset;
 
-        //TODO offseting the polynomial doesn't garantee the percision gains, here is the error, probably
-        for power in 1..Self::DEFAULT_POW{
+        for power in 1..Self::DEFAULT_MAX_POW{
             if temp.coefs[power] != 0.0 {
                 let current_coef = temp.coefs[power];
-                temp.coefs[0] += current_coef*offset.powi(power as i32);
+                temp.coefs[0] += current_coef*offset.powf(power as f64);
                 for index in 1..power{
-                    temp.coefs[power-index] += current_coef*Self::binomial_coef(power, index)*offset.powi(index as i32);
+                    temp.coefs[power-index] += current_coef*Self::binomial_coef(power, index)*offset.powf(index as f64);
                 }
             }
         }
@@ -56,7 +77,7 @@ impl TsPoly{
     }
 
     pub fn truncate(&mut self, max: usize){
-        for index in max+1..Self::DEFAULT_POW{
+        for index in max+1..Self::DEFAULT_MAX_POW{
             self.coefs[index] = 0.0;
         }
     }
@@ -86,9 +107,9 @@ impl Add for TsPoly{
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_POW]};
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
 
-        for i in 0..Self::DEFAULT_POW{
+        for i in 0..Self::DEFAULT_MAX_POW{
             temp.coefs[i] = self.coefs[i] + rhs.coefs[i];
         }
 
@@ -98,7 +119,7 @@ impl Add for TsPoly{
 
 impl AddAssign for TsPoly{
     fn add_assign(&mut self, rhs: Self) {
-        for i in 0..Self::DEFAULT_POW{
+        for i in 0..Self::DEFAULT_MAX_POW{
             self.coefs[i]+=rhs.coefs[i];
         }
     }
@@ -108,9 +129,9 @@ impl Sub for TsPoly{
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_POW]};
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
 
-        for i in 0..Self::DEFAULT_POW{
+        for i in 0..Self::DEFAULT_MAX_POW{
             temp.coefs[i] = self.coefs[i] - rhs.coefs[i];
         }
 
@@ -120,7 +141,7 @@ impl Sub for TsPoly{
 
 impl SubAssign for TsPoly{
     fn sub_assign(&mut self, rhs: Self) {
-        for i in 0..Self::DEFAULT_POW{
+        for i in 0..Self::DEFAULT_MAX_POW{
             self.coefs[i]-=rhs.coefs[i];
         }
     }
@@ -130,12 +151,12 @@ impl Mul for TsPoly{
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output{
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_POW]};
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
 
-        for i_lhs in 0..Self::DEFAULT_POW{
-            for i_rhs in 0..Self::DEFAULT_POW{
+        for i_lhs in 0..Self::DEFAULT_MAX_POW{
+            for i_rhs in 0..Self::DEFAULT_MAX_POW{
                 let end_index = i_lhs + i_rhs;
-                if end_index > Self::DEFAULT_POW - 1 { 
+                if end_index > Self::DEFAULT_MAX_POW - 1 { 
                     break; 
                 }
                 temp.coefs[end_index] += self.coefs[i_lhs] * rhs.coefs[i_rhs];
@@ -148,10 +169,10 @@ impl Mul for TsPoly{
 
 impl MulAssign for TsPoly{
     fn mul_assign(&mut self, rhs: Self) {
-        for i_lhs in 0..Self::DEFAULT_POW{
-            for i_rhs in 0..Self::DEFAULT_POW{
+        for i_lhs in 0..Self::DEFAULT_MAX_POW{
+            for i_rhs in 0..Self::DEFAULT_MAX_POW{
                 let end_index = i_lhs + i_rhs;
-                if end_index >= Self::DEFAULT_POW { 
+                if end_index >= Self::DEFAULT_MAX_POW { 
                     break; 
                 }
                 self.coefs[end_index] += self.coefs[i_lhs] * rhs.coefs[i_rhs];
@@ -166,7 +187,7 @@ impl fmt::Display for TsPoly{
 
         let mut started = false;
 
-        for index in (0..Self::DEFAULT_POW).rev(){
+        for index in (0..Self::DEFAULT_MAX_POW).rev(){
             if self.coefs[index] == 0.0 {
                 continue;
             }
