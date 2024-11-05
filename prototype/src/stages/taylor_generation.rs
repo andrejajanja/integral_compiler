@@ -53,12 +53,13 @@ impl TsPoly {
         }
     }
 
+    //TODO Make it work
     pub(crate) fn generate_tg(poly: &mut TsPoly, offset: &mut f64, max_p: usize){
         //TODO IMPLEMENT SIGNED POLYNOMIAL AND BETTER RANGE NORMALIZATION FOR OFFSET VARIABLE
         let multiple = f64::floor(*offset/PI);
         *offset-=multiple*PI;
 
-        let mut cos_poly = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
+        let mut cos_poly = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
 
         let mut fact: f64 = 1.0;
         poly.coefs[0] = f64::sin(*offset);
@@ -90,6 +91,7 @@ impl TsPoly {
             }
         }
 
+        println!("T(sin) = {}\nT(cos) = {}", poly, cos_poly);
         *poly/=cos_poly;
     }
 
@@ -102,8 +104,6 @@ impl TsPoly {
         }
     }
 
-
-    
     pub(crate) fn generate_ln(poly: &mut TsPoly, offset: f64, max_p: usize){
         if offset < 0.25 {
             unrecoverable_error!(

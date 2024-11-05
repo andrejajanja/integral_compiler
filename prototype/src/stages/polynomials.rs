@@ -10,26 +10,12 @@ use std::{
 //TODO write description for everything defined for this struct
 #[derive(Debug, Clone)]
 pub struct TsPoly {
-    pub coefs: Vec<f64>
+    pub coefs: Vec<f64>,
+    pub max_pow: usize
 }
 
 impl TsPoly{
     pub(crate) const DEFAULT_MAX_POW: usize = 30;
-
-    pub fn test(&mut self, mut offset: f64) {
-        offset = -offset;
-
-        //FIXME offseting the polynomial doesn't garantee the percision gains, here is the error, probably
-        for power in 1..Self::DEFAULT_MAX_POW{
-            if self.coefs[power] != 0.0 {
-                let current_coef = self.coefs[power];
-                self.coefs[0] += current_coef*offset.powi(power as i32);
-                for index in 1..power{
-                    self.coefs[power-index] += current_coef*Self::binomial_coef(power, index)*offset.powi(index as i32);
-                }
-            }
-        }
-    }
 
     pub fn from_func(fun: Func, mut offset: f64, max_p: usize) -> TsPoly{
         if max_p >= Self::DEFAULT_MAX_POW {
@@ -39,7 +25,7 @@ impl TsPoly{
             );
         }
 
-        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
+        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
         
         match fun{
             Func::Sin => Self::generate_sin(&mut temp, &mut offset, max_p),
@@ -107,7 +93,15 @@ impl Add for TsPoly{
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
+        let max_p;
+
+        if self.max_pow > rhs.max_pow{
+            max_p = self.max_pow;
+        }else{
+            max_p = rhs.max_pow
+        }
+
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
 
         for i in 0..Self::DEFAULT_MAX_POW{
             temp.coefs[i] = self.coefs[i] + rhs.coefs[i];
@@ -129,7 +123,16 @@ impl Sub for TsPoly{
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
+        //TODO check integrity of this max_pow code
+        let max_p;
+
+        if self.max_pow > rhs.max_pow{
+            max_p = self.max_pow;
+        }else{
+            max_p = rhs.max_pow
+        }
+
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
 
         for i in 0..Self::DEFAULT_MAX_POW{
             temp.coefs[i] = self.coefs[i] - rhs.coefs[i];
@@ -151,7 +154,7 @@ impl Mul for TsPoly{
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output{
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow + rhs.max_pow};
 
         for i_lhs in 0..Self::DEFAULT_MAX_POW{
             for i_rhs in 0..Self::DEFAULT_MAX_POW{
@@ -184,16 +187,51 @@ impl MulAssign for TsPoly{
 impl Div for TsPoly{
     type Output = Self;
 
+    //TODO Check the integrity of this operator
     fn div(self, rhs: Self) -> Self::Output {
-        let temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
+        let mut remainder = self.clone();
+        let mut quotient = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow - rhs.max_pow};
 
-        temp
+        // Perform division algorithm
+        for i in 0..=self.max_pow - rhs.max_pow {
+            quotient.coefs[i] = remainder.coefs[i] / rhs.coefs[0];
+
+            for j in 0..=rhs.max_pow {
+                remainder.coefs[i + j] -= quotient.coefs[i] * rhs.coefs[j];
+            }
+        }
+
+        quotient
     }
 }
 
 impl DivAssign for TsPoly{
     fn div_assign(&mut self, rhs: Self) {
+        if rhs.max_pow > self.max_pow {
+            unrecoverable_error!(
+                "Frontend error | Power of the numerator needs to be bigger than the power of denuminator polynomial (negative powers are not supported)",
+                format!("Numerator/Left operand({}) < Denuminator/Right operand({})", self.max_pow, rhs.max_pow)
+            );
+        }
         
+
+        let mut quotient = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow - rhs.max_pow};
+
+        //TODO optimize this algorithm
+        for i in 0..=self.max_pow - rhs.max_pow {
+            quotient.coefs[i] = self.coefs[i] / rhs.coefs[0];
+
+            for j in 0..=rhs.max_pow {
+                self.coefs[i + j] -= quotient.coefs[i] * rhs.coefs[j];
+            }
+
+            println!("{} // {}", self, quotient);
+        }
+
+        self.max_pow-=rhs.max_pow;
+        for i in 0..Self::DEFAULT_MAX_POW{
+            self.coefs[i] = quotient.coefs[i];
+        }
     }
 }
 
