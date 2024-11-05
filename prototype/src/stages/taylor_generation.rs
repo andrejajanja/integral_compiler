@@ -53,6 +53,46 @@ impl TsPoly {
         }
     }
 
+    pub(crate) fn generate_tg(poly: &mut TsPoly, offset: &mut f64, max_p: usize){
+        //TODO IMPLEMENT SIGNED POLYNOMIAL AND BETTER RANGE NORMALIZATION FOR OFFSET VARIABLE
+        let multiple = f64::floor(*offset/PI);
+        *offset-=multiple*PI;
+
+        let mut cos_poly = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
+
+        let mut fact: f64 = 1.0;
+        poly.coefs[0] = f64::sin(*offset);
+        poly.coefs[0] = f64::cos(*offset);
+        for i in 1..=max_p{
+            fact *= i as f64;
+
+            //TODO optimize this match to work faster using just ifs and ands
+            match i & 0x3 {
+                0 => {
+                    poly.coefs[i] = f64::sin(*offset)/fact;
+                    cos_poly.coefs[i] = f64::cos(*offset)/fact;
+                },
+                1 => {
+                    poly.coefs[i] = f64::cos(*offset)/fact;
+                    cos_poly.coefs[i] = -f64::sin(*offset)/fact;
+                },
+                2 => {
+                    poly.coefs[i] = -f64::sin(*offset)/fact;
+                    cos_poly.coefs[i] = -f64::cos(*offset)/fact;
+                },
+                3 => {
+                    poly.coefs[i] = -f64::cos(*offset)/fact;
+                    cos_poly.coefs[i] = f64::sin(*offset)/fact;
+                },
+                num => {
+                    unrecoverable_error!("Unforseen error | TsPoly::generate_sin - i%4 gives this as a result", num);
+                }
+            }
+        }
+
+        *poly/=cos_poly;
+    }
+
     pub(crate) fn generate_exp(poly: &mut TsPoly, offset: f64, max_p: usize){
         let mut fact: f64 = 1.0;
         poly.coefs[0] = f64::exp(offset);

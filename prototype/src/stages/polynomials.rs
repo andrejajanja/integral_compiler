@@ -4,7 +4,7 @@ use crate::components::object_type_definitions::Func;
 use std::{
     fmt,
     process::exit,
-    ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign}
+    ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign, Div, DivAssign}
 };
 
 //TODO write description for everything defined for this struct
@@ -44,7 +44,7 @@ impl TsPoly{
         match fun{
             Func::Sin => Self::generate_sin(&mut temp, &mut offset, max_p),
             Func::Cos => Self::generate_cos(&mut temp, &mut offset, max_p),
-            Func::Tg => todo!(),
+            Func::Tg => Self::generate_tg(&mut temp, &mut offset, max_p),
             Func::Ctg => todo!(),
             Func::Ln => Self::generate_ln(&mut temp, offset, max_p),
             Func::Exp => Self::generate_exp(&mut temp, offset, max_p),
@@ -181,6 +181,22 @@ impl MulAssign for TsPoly{
     }
 }
 
+impl Div for TsPoly{
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        let temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW]};
+
+        temp
+    }
+}
+
+impl DivAssign for TsPoly{
+    fn div_assign(&mut self, rhs: Self) {
+        
+    }
+}
+
 impl fmt::Display for TsPoly{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut temp_str = String::from("");
@@ -231,3 +247,4 @@ impl fmt::Display for TsPoly{
         write!(f, "{}", temp_str)
     }
 }
+
