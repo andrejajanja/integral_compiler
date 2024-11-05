@@ -34,7 +34,7 @@ impl TsPoly{
     pub fn from_func(fun: Func, mut offset: f64, max_p: usize) -> TsPoly{
         if max_p >= Self::DEFAULT_MAX_POW {
             unrecoverable_error!(
-                "Frontend error | Invalid argument max_p when generating Taylor's polynomial",
+                "Frontend error | Invalid argument max_p when generating Taylor's polynomial for a Func value",
                 format!("max_p({}) >= DEFAULT_MAX_POW({})", max_p, Self::DEFAULT_MAX_POW-1)
             );
         }
@@ -46,7 +46,7 @@ impl TsPoly{
             Func::Cos => Self::generate_cos(&mut temp, &mut offset, max_p),
             Func::Tg => todo!(),
             Func::Ctg => todo!(),
-            Func::Ln => todo!(),//Self::generate_ln(&mut temp, offset),
+            Func::Ln => Self::generate_ln(&mut temp, offset, max_p),
             Func::Exp => Self::generate_exp(&mut temp, offset, max_p),
             Func::Atg => todo!(),
             Func::Actg => todo!(),

@@ -12,7 +12,7 @@ extern "C" {
 }
 fn main(){
 
-    let a  = TsPoly::from_func(Func::Exp, 0.0, 9);
+    let a  = TsPoly::from_func(Func::Ln, 3.0, 9);
     println!("y = {}", a);
 }
 

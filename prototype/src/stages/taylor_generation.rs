@@ -16,7 +16,9 @@ impl TsPoly {
         poly.coefs[0] = f64::sin(*offset);
         for i in 1..=max_p{
             fact *= i as f64;
-            poly.coefs[i] = match i%4 {
+
+            //TODO optimize this match to work faster using just ifs and ands
+            poly.coefs[i] = match i & 0x3 {
                 0 => f64::sin(*offset)/fact,
                 1 => f64::cos(*offset)/fact,
                 2 => -f64::sin(*offset)/fact,
@@ -37,6 +39,8 @@ impl TsPoly {
         let mut fact: f64 = 1.0;
         for i in 1..=max_p{
             fact *= i as f64;
+
+            //TODO optimize this match to work faster using just ifs and ands
             poly.coefs[i] = match i%4 {
                 0 => f64::cos(*offset)/fact,
                 1 => -f64::sin(*offset)/fact,
@@ -55,6 +59,32 @@ impl TsPoly {
         for i in 1..=max_p{
             fact *= i as f64;
             poly.coefs[i] = f64::exp(offset)/fact;
+        }
+    }
+
+
+    
+    pub(crate) fn generate_ln(poly: &mut TsPoly, offset: f64, max_p: usize){
+        if offset < 0.25 {
+            unrecoverable_error!(
+                "Frontend error | Can't generate Taylor's polynomial for provided offset value",
+                format!("{}  < 0.25", offset)
+            );
+        }
+
+        poly.coefs[0] = f64::ln(offset);
+        if max_p == 0 {return};
+
+        poly.coefs[1] = 1.0/offset;
+        if max_p == 1 {return};
+
+        poly.coefs[2] = -1.0/(2.0*offset.powf(2.0));
+        for i in 3..=max_p{
+            let mut temp = 1.0/(offset.powf(i as f64)*i as f64);
+            if i & 0x1 == 0 {
+                temp = -temp;
+            }
+            poly.coefs[i] = temp;
         }
     }
 
