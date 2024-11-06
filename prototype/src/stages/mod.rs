@@ -1,6 +1,5 @@
-pub mod string_to_tree_recursive;
-pub mod string_to_tree_iterative;
+pub mod function_parse_recursive;
+pub mod function_parse_iterative;
 pub mod ir_compile;
+pub mod taylor_ir_compile;
 pub mod linking;
-pub mod polynomials;
-pub mod taylor_generation;

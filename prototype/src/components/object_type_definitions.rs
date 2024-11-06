@@ -7,24 +7,36 @@ use std::{
 //TODO Add hyperbolic functions to this enum
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Func {
-    //unary operators
+    //Trigonometry functions
     Sin,    // sin(f(x))
     Cos,    // cos(f(x))
     Tg,     // tg(f(x))
     Ctg,    // ctg(f(x))
-    Ln,     // ln(f(x))
-    Exp,    // e^(f(x))
-    Sqrt,   // sqrt(f(x))
+    Sinh,   // sinh(f(x))
+    Cosh,   // cosh(f(x))
+    Tgh,    // tgh(f(x))
+    Ctgh,   // ctgh(f(x))
+
+    //Inverse trigonometry functions
     Atg,  // arctg(f(x))
     Actg, // arcctg(f(x))
     Asin, // arcsin(f(x))
     Acos, // arccos(f(x))
+    Arsinh,   // arsinh(f(x))
+    Arcosh,   // arcosh(f(x))
+    Artgh,   // artgh(f(x))
+    Arctgh,   // arctgh(f(x))
 
-    //These are the binary operation +, -, *, /
+    //Exp based functions
+    Ln,     // ln(f(x))
+    Exp,    // e^(f(x))
+
+    //Algebraic functions/
     Add,
     Sub,
     Mul,
     Div,
+    Sqrt,   // sqrt(f(x))
     Pow,    // g(x)^(f(x))
 
     //brackets
@@ -55,6 +67,14 @@ impl Func {
             Func::Atg | Func::Actg => String::from("atan"),
             Func::Asin => String::from("asin"),
             Func::Acos => String::from("acos"),
+            Func::Sinh => todo!(),
+            Func::Cosh => todo!(),
+            Func::Tgh => todo!(),
+            Func::Ctgh => todo!(),
+            Func::Arsinh => todo!(),
+            Func::Arcosh => todo!(),
+            Func::Artgh => todo!(),
+            Func::Arctgh => todo!(),
             Func::Ob | Func::Cb | Func::None | Func::Const | Func::X => {
                 unrecoverable_error!(
                     "Error generating the IR code string",
@@ -88,7 +108,15 @@ impl fmt::Display for Func {
             Func::Acos => String::from("arccos"),
             Func::Actg => String::from("arcctg"),
             Func::Ob => String::from("("),
-            Func::Cb => String::from(")")
+            Func::Cb => String::from(")"),
+            Func::Sinh => String::from("sinh"),
+            Func::Cosh => String::from("cosh"),
+            Func::Tgh => String::from("tgh"),
+            Func::Ctgh => String::from("ctgh"),
+            Func::Arsinh => String::from("arsinh"),
+            Func::Arcosh => String::from("arcosh"),
+            Func::Artgh => String::from("artgh"),
+            Func::Arctgh => String::from("arctgh")
         };
 
         write!(f, "{}", temp)

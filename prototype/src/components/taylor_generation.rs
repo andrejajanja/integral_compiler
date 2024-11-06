@@ -133,4 +133,39 @@ impl TsPoly {
         }
     }
 
+    pub(crate) fn generate_sinh(poly: &mut TsPoly, offset: f64, max_p: usize){
+        let exp2x = f64::exp(2.0*offset);
+        let sinh_off = (exp2x - 1.0)/exp2x;
+        let cosh_off = (exp2x + 1.0)/exp2x;
+
+        poly.coefs[0] = sinh_off;
+
+        let mut fact: f64 = 1.0;
+        for i in 1..=max_p{
+            fact *= i as f64;
+            if i & 0x1 == 0{
+                poly.coefs[i] = cosh_off/fact;
+            }else{
+                poly.coefs[i] = sinh_off/fact;
+            }
+        }
+    }
+
+    pub(crate) fn generate_cosh(poly: &mut TsPoly, offset: f64, max_p: usize){
+        let exp2x = f64::exp(2.0*offset);
+        let sinh_off = (exp2x - 1.0)/exp2x;
+        let cosh_off = (exp2x + 1.0)/exp2x;
+
+        poly.coefs[0] = cosh_off;
+
+        let mut fact: f64 = 1.0;
+        for i in 1..=max_p{
+            fact *= i as f64;
+            if i & 0x1 == 0{
+                poly.coefs[i] = sinh_off/fact;
+            }else{
+                poly.coefs[i] = cosh_off/fact;
+            }
+        }
+    }
 }

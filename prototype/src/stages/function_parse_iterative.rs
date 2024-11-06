@@ -5,7 +5,7 @@ use crate::components::error_types::CompilationError;
 use crate::unrecoverable_error;
 use std::process::exit;
 
-use super::string_to_tree_recursive::print_tree_rec;
+use super::function_parse_recursive::print_tree_rec;
 
 pub fn tree_to_string_iter(root: &Node) -> String {
     let helper_root = root.clone();
@@ -149,7 +149,7 @@ fn try_parsing(chunk: &str) -> Result<Option<Node>, CompilationError> {
     }
 }
 
-pub fn string_to_vec_of_node(function: &str) -> Vec<Node> {
+pub fn parse_function(function: &str) -> Vec<Node> {
     let mut list: Vec<Node> = Vec::<Node>::new();
 
     let mut i: usize = 0;
@@ -277,7 +277,7 @@ pub fn vec_node_to_string(ve: &Vec<Node>) -> String{
     helper_string
 }
 
-pub fn vec_infix_to_postfix(infix: Vec<Node>) -> Vec<Node>{
+pub fn convert_infix_to_postfix(infix: Vec<Node>) -> Vec<Node>{
     let mut postfix: Vec<Node> = Vec::<Node>::new();
     let mut stack: Vec<Node> = Vec::<Node>::new();
 
@@ -505,14 +505,13 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
     list[0].clone()
 }
 
-//TODO profiling for all of the parts of this function, maybe frist line of the function can be optimized more.
 pub fn str_to_tree_iter(function: &str) -> Node{
-    let mut list: Vec<Node> = vec_infix_to_postfix(string_to_vec_of_node(function));
+    let mut list: Vec<Node> = convert_infix_to_postfix(parse_function(function));
     let root = postfix_to_tree(&mut list);
     root
 }
 
-fn find_unique_unique_funcs_iter(root: &Node) -> Vec<Func>{
+fn find_unique_funcs_iter(root: &Node) -> Vec<Func>{
     let mut unique_funcs = Vec::<Func>::new();
 
     let helper_root = root.clone();
@@ -551,3 +550,4 @@ fn find_unique_unique_funcs_iter(root: &Node) -> Vec<Func>{
 
     unique_funcs
 }
+

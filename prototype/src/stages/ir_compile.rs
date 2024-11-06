@@ -4,7 +4,7 @@ use crate::components::{
     object_type_definitions::*,
     terminal_decoration::Color
 };
-use crate::stages::string_to_tree_iterative::{string_to_vec_of_node, vec_infix_to_postfix};
+use crate::stages::function_parse_iterative::{parse_function, convert_infix_to_postfix};
 use std::process::exit;
 
 fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
@@ -118,8 +118,8 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
 }
 
 pub fn generate_ir(function: &String) -> String {
-    let function_infix = string_to_vec_of_node(function);
-    let function_postfix = vec_infix_to_postfix(function_infix);
+    let function_infix = parse_function(function);
+    let function_postfix = convert_infix_to_postfix(function_infix);
 
     let (mut func_code,functions_to_define, ret_addr) = compile_postfix(function_postfix);
     let mut code = String::from("");
@@ -134,4 +134,3 @@ pub fn generate_ir(function: &String) -> String {
     code += &format!("\ndefine double @fja(double %x){{\n{}\tret double %{}\n}}", func_code, ret_addr+1);
     code
 }
-
