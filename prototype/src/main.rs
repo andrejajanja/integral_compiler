@@ -12,8 +12,8 @@ extern "C" {
 }
 fn main(){
 
-    let a = TsPoly::from_func(Func::Tg, 0.5, 7);
-    println!("y = {}", a);
+    let a = TsPoly::from_func(Func::Tg, 0.2, 9);
+    println!("T(tg) = {}", a);
 }
 
 #[cfg(test)]

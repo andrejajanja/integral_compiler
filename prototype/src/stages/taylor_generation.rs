@@ -59,30 +59,31 @@ impl TsPoly {
         let multiple = f64::floor(*offset/PI);
         *offset-=multiple*PI;
 
+        let mut sin_poly = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
         let mut cos_poly = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
 
         let mut fact: f64 = 1.0;
-        poly.coefs[0] = f64::sin(*offset);
-        poly.coefs[0] = f64::cos(*offset);
+        sin_poly.coefs[0] = f64::sin(*offset);
+        cos_poly.coefs[0] = f64::cos(*offset);
         for i in 1..=max_p{
             fact *= i as f64;
 
             //TODO optimize this match to work faster using just ifs and ands
             match i & 0x3 {
                 0 => {
-                    poly.coefs[i] = f64::sin(*offset)/fact;
+                    sin_poly.coefs[i] = f64::sin(*offset)/fact;
                     cos_poly.coefs[i] = f64::cos(*offset)/fact;
                 },
                 1 => {
-                    poly.coefs[i] = f64::cos(*offset)/fact;
+                    sin_poly.coefs[i] = f64::cos(*offset)/fact;
                     cos_poly.coefs[i] = -f64::sin(*offset)/fact;
                 },
                 2 => {
-                    poly.coefs[i] = -f64::sin(*offset)/fact;
+                    sin_poly.coefs[i] = -f64::sin(*offset)/fact;
                     cos_poly.coefs[i] = -f64::cos(*offset)/fact;
                 },
                 3 => {
-                    poly.coefs[i] = -f64::cos(*offset)/fact;
+                    sin_poly.coefs[i] = -f64::cos(*offset)/fact;
                     cos_poly.coefs[i] = f64::sin(*offset)/fact;
                 },
                 num => {
@@ -91,8 +92,12 @@ impl TsPoly {
             }
         }
 
-        println!("T(sin) = {}\nT(cos) = {}", poly, cos_poly);
-        *poly/=cos_poly;
+        println!("T(sin) = {}\nT(cos) = {}", sin_poly, cos_poly);
+        sin_poly/=cos_poly;
+
+        for i in 0..Self::DEFAULT_MAX_POW{
+            poly.coefs[i] = sin_poly.coefs[i];
+        }
     }
 
     pub(crate) fn generate_exp(poly: &mut TsPoly, offset: f64, max_p: usize){

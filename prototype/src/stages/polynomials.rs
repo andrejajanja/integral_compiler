@@ -85,6 +85,10 @@ impl TsPoly{
     
         result as f64
     }
+
+    pub(crate) fn lead(&self) -> f64{
+        self.coefs[self.max_pow]
+    }
 }
 
 //Definitions of overloaded traits for ergonomic access
@@ -184,21 +188,38 @@ impl MulAssign for TsPoly{
     }
 }
 
+
+// function n / d is
+//     require d ≠ 0
+//     q ← 0
+//     r ← n             // At each step n = d × q + r
+
+//     while r ≠ 0 and degree(r) ≥ degree(d) do
+//         t ← lead(r) / lead(d)       // Divide the leading terms
+//         q ← q + t
+//         r ← r − t × d
+
+//     return (q, r), here +,-,x are polynomial arithmetic operations
 impl Div for TsPoly{
     type Output = Self;
-
-    //TODO Check the integrity of this operator
+    
     fn div(self, rhs: Self) -> Self::Output {
+        if rhs.max_pow == 0 && rhs.coefs[0] == 0.0 {
+            unrecoverable_error!(
+                "Frontend error | Polynomial division error (/-op)",
+                "Right hand side can't be 0-polynomial"
+            );
+        }
+        
+        let mut quotient = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow-rhs.max_pow};
         let mut remainder = self.clone();
-        let mut quotient = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow - rhs.max_pow};
 
-        // Perform division algorithm
-        for i in 0..=self.max_pow - rhs.max_pow {
-            quotient.coefs[i] = remainder.coefs[i] / rhs.coefs[0];
-
-            for j in 0..=rhs.max_pow {
-                remainder.coefs[i + j] -= quotient.coefs[i] * rhs.coefs[j];
-            }
+        while remainder.coefs[0] != 0.0 && remainder.max_pow != 0 && remainder.max_pow >= rhs.max_pow {
+            let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: remainder.max_pow-rhs.max_pow};
+            temp.coefs[remainder.max_pow-rhs.max_pow] = remainder.lead()/rhs.lead();
+            quotient+=temp.clone();
+            remainder-=temp*rhs.clone();
+            remainder.max_pow-=1;
         }
 
         quotient
@@ -207,28 +228,23 @@ impl Div for TsPoly{
 
 impl DivAssign for TsPoly{
     fn div_assign(&mut self, rhs: Self) {
-        if rhs.max_pow > self.max_pow {
+        if rhs.max_pow == 0 && rhs.coefs[0] == 0.0 {
             unrecoverable_error!(
-                "Frontend error | Power of the numerator needs to be bigger than the power of denuminator polynomial (negative powers are not supported)",
-                format!("Numerator/Left operand({}) < Denuminator/Right operand({})", self.max_pow, rhs.max_pow)
+                "Frontend error | Polynomial division error (/-op)",
+                "Right hand side can't be 0-polynomial"
             );
         }
         
+        let mut quotient = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow-rhs.max_pow};
 
-        let mut quotient = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow - rhs.max_pow};
-
-        //TODO optimize this algorithm
-        for i in 0..=self.max_pow - rhs.max_pow {
-            quotient.coefs[i] = self.coefs[i] / rhs.coefs[0];
-
-            for j in 0..=rhs.max_pow {
-                self.coefs[i + j] -= quotient.coefs[i] * rhs.coefs[j];
-            }
-
-            println!("{} // {}", self, quotient);
+        while self.coefs[0] != 0.0 && self.max_pow != 0 && self.max_pow >= rhs.max_pow {
+            let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow-rhs.max_pow};
+            temp.coefs[self.max_pow-rhs.max_pow] = self.lead()/rhs.lead();
+            quotient+=temp.clone();
+            *self-=temp*rhs.clone();
+            self.max_pow-=1;
         }
 
-        self.max_pow-=rhs.max_pow;
         for i in 0..Self::DEFAULT_MAX_POW{
             self.coefs[i] = quotient.coefs[i];
         }
