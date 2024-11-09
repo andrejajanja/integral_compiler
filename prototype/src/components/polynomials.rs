@@ -1,13 +1,13 @@
 use crate::unrecoverable_error;
 use crate::components::terminal_decoration::Color;
 use crate::components::object_type_definitions::Func;
-use std::{
-    fmt,
-    process::exit,
-    ops::{Add, AddAssign, Mul, MulAssign, Sub, SubAssign, Div, DivAssign}
-};
+use std::process::exit;
 
 //TODO write description for everything defined for this struct
+
+/// Struct for effitiently handling, generating and manipulating [Taylor polynomials](https://en.wikipedia.org/wiki/Taylor_series)
+/// # Description-Fields
+/// # Overloaded operators
 #[derive(Debug, Clone)]
 pub struct TsPoly {
     pub coefs: Vec<f64>,
@@ -15,7 +15,12 @@ pub struct TsPoly {
 }
 
 impl TsPoly{
+    /// Highest default available power of the polynomial. Last element of this array is coefitient next to x^(DEFAULT_MAX_POW-1).
     pub(crate) const DEFAULT_MAX_POW: usize = 30;
+
+    pub fn new() -> TsPoly{
+        TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: 0}
+    }
 
     pub fn from_func(fun: Func, mut offset: f64, max_p: usize) -> TsPoly{
         if max_p >= Self::DEFAULT_MAX_POW {
@@ -70,10 +75,18 @@ impl TsPoly{
         temp
     }
 
+    pub fn from_const(constant: f64) -> TsPoly {
+        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: 0};
+        temp.coefs[0] = constant;
+        temp
+    }
+
+    /// Sets coefitiens to 0 from x^new_max_pow+1 monom till the end (DEFAULT_MAX_POW-1th power)
     pub fn truncate(&mut self, new_max_pow: usize){
         self.coefs[new_max_pow+1..Self::DEFAULT_MAX_POW].fill(0.0);
     }
 
+    //TODO Make this function a table look up for speed
     fn binomial_coef(n: usize, k: usize) -> f64{
         if k > n {
             return 0.0;
@@ -110,6 +123,7 @@ impl TsPoly{
         }
     }
 
+    /// Returns the coefitient next to the highest power of x of the polynomial.
     pub(crate) fn lead(&self) -> f64{
         self.coefs[self.max_pow]
     }

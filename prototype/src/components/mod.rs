@@ -6,3 +6,5 @@ pub mod external_functions;
 pub mod polynomials;
 pub mod taylor_generation;
 pub mod polynomial_operators;
+pub mod lexem_processor_taylor;
+pub mod lexem_processor_state_handlers;
