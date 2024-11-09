@@ -4,15 +4,13 @@
 mod components;
 mod stages;
 
-use prototype::components::object_type_definitions::Func;
-use prototype::components::polynomials::TsPoly;
 use prototype::stages::taylor_ir_compile::generate_taylor_ir;
 
 extern "C" {
     static __code_buffer: u8;  // Start of the reserved block, size is 16KB
 }
 fn main(){
-    generate_taylor_ir(&String::from("x^3+7"), 0.0, 9);
+    generate_taylor_ir(&String::from("sin(x)+7"), 0.0, 9);
     // let mut a = TsPoly::from_func(Func::Exp, 1.5, 8);
 
     // let b = TsPoly::from_func(Func::Sin, 1.5, 8);

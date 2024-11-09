@@ -5,7 +5,7 @@ use std::process::exit;
 
 //TODO write description for everything defined for this struct
 
-/// Struct for effitiently handling, generating and manipulating [Taylor polynomials](https://en.wikipedia.org/wiki/Taylor_series)
+/// Struct for handling, generating and manipulating [Taylor polynomials](https://en.wikipedia.org/wiki/Taylor_series)
 /// # Description-Fields
 /// # Overloaded operators
 #[derive(Debug, Clone)]
@@ -15,7 +15,7 @@ pub struct TsPoly {
 }
 
 impl TsPoly{
-    /// Highest default available power of the polynomial. Last element of this array is coefitient next to x^(DEFAULT_MAX_POW-1).
+    /// Highest default available power of the polynomial. Last element of coefs vector is coefitient next to x^(DEFAULT_MAX_POW-1).
     pub(crate) const DEFAULT_MAX_POW: usize = 30;
 
     pub fn new() -> TsPoly{
@@ -52,7 +52,7 @@ impl TsPoly{
             Func::Artgh => todo!(),
             Func::Arctgh => todo!(),
             _ => {
-                unrecoverable_error!("Frontend error | Can't/Shouldn't generate Taylor's polynomial for this Func value", fun);
+                unrecoverable_error!("Taylor generation error | Can't/Shouldn't generate Taylor's polynomial for this Func value", fun);
             }
         }
 

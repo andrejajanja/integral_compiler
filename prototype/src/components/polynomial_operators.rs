@@ -158,7 +158,7 @@ impl Div for TsPoly{
     fn div(self, rhs: Self) -> Self::Output {
         if rhs.max_pow == 0 && rhs.coefs[0] == 0.0 {
             unrecoverable_error!(
-                "Frontend error | Polynomial division error (/-op)",
+                "Taylor generation error | Polynomial division error",
                 "Right hand side can't be 0-polynomial"
             );
         }
@@ -182,7 +182,7 @@ impl DivAssign for TsPoly{
     fn div_assign(&mut self, rhs: Self) {
         if rhs.max_pow == 0 && rhs.coefs[0] == 0.0 {
             unrecoverable_error!(
-                "Frontend error | Polynomial division error (/-op)",
+                "Taylor generation error | Polynomial division error",
                 "Right hand side can't be 0-polynomial"
             );
         }
