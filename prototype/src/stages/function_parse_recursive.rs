@@ -5,16 +5,16 @@ use crate::components::object_type_definitions::*;
 
 pub fn print_tree_rec(node: &Node, tab: usize, addition: char) {
     match &node.op {
-        Func::Const => {
-            print!("{}| {:?} |{}", "\t".repeat(tab), node.c, addition);
+        Func::Const(value) => {
+            print!("{}| {:?} |{}", "\t".repeat(tab), value, addition);
         }
         _ => {
             print!("{}| {:?} |{}", "\t".repeat(tab), node.op, addition);
         }
     }
-    match &node.first {
+    match &node.left {
         Some(no) => {
-            match &node.second {
+            match &node.right {
                 None => {
                     print!("\n");
                 }
@@ -25,7 +25,7 @@ pub fn print_tree_rec(node: &Node, tab: usize, addition: char) {
         }
         None => {}
     }
-    match &node.second {
+    match &node.right {
         Some(no) => {
             print_tree_rec(&no, tab + 1, '\n');
         }
@@ -34,16 +34,16 @@ pub fn print_tree_rec(node: &Node, tab: usize, addition: char) {
 }
 
 fn find_unique_funcs_rec(node: &Node, funs: &mut Vec<Func>) {
-    if !funs.contains(&node.op) &&  node.op != Func::Const && node.op != Func::X{
+    if !funs.contains(&node.op) && matches!(node.op,Func::Const(_)) && node.op != Func::X{
         funs.push(node.op); //you will maybe need to add .clone() here to op
     }
-    match &node.first {
+    match &node.left {
         Some(no) => {
             find_unique_funcs_rec(&no, funs);
         }
         None => {return;}
     }
-    match &node.second {
+    match &node.right {
         Some(no) => {
             find_unique_funcs_rec(&no, funs);
         }
@@ -105,14 +105,14 @@ fn split_by_ops(
 fn generate_stairs(chunks: &[String], ops: &[Func]) -> Node {
     let mut node = Node::new();
     if chunks.len() == 1 {
-        node.first = Some(Box::new(str_to_tree_rec(&chunks[0])));
+        node.left = Some(Box::new(str_to_tree_rec(&chunks[0])));
     } else {
         node.op = ops[0];
-        node.first = Some(Box::new(str_to_tree_rec(&chunks[0])));
+        node.left = Some(Box::new(str_to_tree_rec(&chunks[0])));
         if ops.len() == 1 {
-            node.second = Some(Box::new(str_to_tree_rec(&chunks[1])));
+            node.right = Some(Box::new(str_to_tree_rec(&chunks[1])));
         } else {
-            node.second = Some(Box::new(generate_stairs(&chunks[1..], &ops[1..])));
+            node.right = Some(Box::new(generate_stairs(&chunks[1..], &ops[1..])));
         }
     }
     node
@@ -127,13 +127,13 @@ pub fn str_to_tree_rec(function: &String) -> Node {
     if first_tier_chunks.len() != 1 {
         //case if there are any first tier operation in the function string
         sub_node.op = first_tier_ops[0];
-        sub_node.first = Some(Box::new(str_to_tree_rec(&first_tier_chunks[0])));
+        sub_node.left = Some(Box::new(str_to_tree_rec(&first_tier_chunks[0])));
         if first_tier_chunks.len() == 2 {
             //there are just 2 elements of 1st tier ops, processing the other one manualy
-            sub_node.second = Some(Box::new(str_to_tree_rec(&first_tier_chunks[1])));
+            sub_node.right = Some(Box::new(str_to_tree_rec(&first_tier_chunks[1])));
         } else {
             //there are more than 2 elements of 1st tier ops, running a tree algorithm
-            sub_node.second = Some(Box::new(generate_stairs(
+            sub_node.right = Some(Box::new(generate_stairs(
                 &first_tier_chunks[1..],
                 &first_tier_ops[1..],
             )));
@@ -146,31 +146,29 @@ pub fn str_to_tree_rec(function: &String) -> Node {
         //if there are some second tier ops
         if second_tier_chunks.len() != 1 {
             sub_node.op = second_tier_ops[0];
-            sub_node.first = Some(Box::new(str_to_tree_rec(&second_tier_chunks[0])));
+            sub_node.left = Some(Box::new(str_to_tree_rec(&second_tier_chunks[0])));
 
             if second_tier_chunks.len() == 2 {
-                sub_node.second = Some(Box::new(str_to_tree_rec(&second_tier_chunks[1])));
+                sub_node.right = Some(Box::new(str_to_tree_rec(&second_tier_chunks[1])));
             } else {
                 //there are more than 2 elements of 2nd tier ops, running a tree algorithm
-                sub_node.second = Some(Box::new(generate_stairs(
+                sub_node.right = Some(Box::new(generate_stairs(
                     &second_tier_chunks[1..],
                     &second_tier_ops[1..],
                 )));
             }
         } else {
             //There aren't any 2nd tier ops, checking for the single ops
-            sub_node.second = None;
+            sub_node.right = None;
             if function == "x" {
-                sub_node.first = None;
+                sub_node.left = None;
                 sub_node.op = Func::X;
-                sub_node.c = None;
                 return sub_node;
             }
             match function.parse::<f64>() {
                 Ok(c) => {
-                    sub_node.first = None;
-                    sub_node.op = Func::Const;
-                    sub_node.c = Some(c);
+                    sub_node.left = None;
+                    sub_node.op = Func::Const(c);
                     return sub_node;
                 }
                 Err(_c) => {}
@@ -198,7 +196,6 @@ pub fn str_to_tree_rec(function: &String) -> Node {
             let lower_level = &function[start + 1..end].to_string();
 
             //determening the function type
-            sub_node.c = None;
             match &function[0..start] {
                 "sin" => {
                     sub_node.op = Func::Sin;
@@ -239,7 +236,7 @@ pub fn str_to_tree_rec(function: &String) -> Node {
                 }
             }
             //further processing lower level of this chunk
-            sub_node.first = Some(Box::new(str_to_tree_rec(lower_level)));
+            sub_node.left = Some(Box::new(str_to_tree_rec(lower_level)));
         }
     }
     sub_node

@@ -1,7 +1,7 @@
 use crate::unrecoverable_error;
 
 use super::{
-    lexem_processor_taylor::LexemProcessorTaylor,
+    lexem_processor_taylor::{LexemProcessorTaylor, Operand, Relation},
     object_type_definitions::Func,
     terminal_decoration::Color,
     polynomials::TsPoly
@@ -10,20 +10,75 @@ use super::{
 use std::{f64::consts::PI, process::exit};
 
 impl LexemProcessorTaylor{
+
+    //TODO check integrity of every branch in this function
     pub(crate) fn state_0_handler(&mut self){
 
+        let temp_operand = match self.operands.pop() {
+            Some(_value) => _value,
+            None => {
+                unrecoverable_error!(
+                    "Lexem processor error | State 0 expected at least operand in operands vector",
+                    "found none"
+                );
+            }
+        };
+
+        match self.current_lexem.op {
+            //Handling polynomials upon which I can easaly do 'of' operation
+            Func::Sin | Func::Cos | Func::Ln | Func::Exp | Func::Sinh | Func::Cosh => {
+                let mut temp_poly = TsPoly::from_func(self.current_lexem.op, self.precision_center, self.max_power);
+                match temp_operand {
+                    Operand::Polynomial(ts_poly) => {
+                        temp_poly.of(ts_poly.to_owned());
+                    },
+                    some_other_operand => {
+                        self.operands.push(some_other_operand);
+                        self.relations.push(Relation::Of);
+                    }
+                }    
+                self.operands.push(Operand::Polynomial(temp_poly));    
+            },
+            Func::Sqrt => {
+                self.operands.push(temp_operand);
+                self.relations.push(Relation::Sqrt);
+            },
+            Func::Tg => todo!(),
+            Func::Ctg => todo!(),
+            Func::Tgh => todo!(),
+            Func::Ctgh => todo!(),
+            Func::Atg => todo!(),
+            Func::Actg => todo!(),
+            Func::Asin => todo!(),
+            Func::Acos => todo!(),
+            Func::Arsinh => todo!(),
+            Func::Arcosh => todo!(),
+            Func::Artgh => todo!(),
+            Func::Arctgh => todo!(),
+            Func::Add => todo!(),
+            Func::Sub => todo!(),
+            Func::Mul => todo!(),
+            Func::Div => todo!(),
+            Func::Pow => todo!(),
+            unsupported_op => {
+                unrecoverable_error!(
+                    "Lexem processor error | Invlid lexem for state 0",
+                    format!("{unsupported_op}")
+                );
+            }
+        }
     }
 
     pub(crate) fn state_1_handler(&mut self){
         match self.current_lexem.op {
-            Func::Sin => self.gen_polys.push(TsPoly::from_func(Func::Sin, self.precision_center, self.max_power)),
-            Func::Cos => self.gen_polys.push(TsPoly::from_func(Func::Cos, self.precision_center, self.max_power)),
+            Func::Sin => self.operands.push(Operand::Polynomial(TsPoly::from_func(Func::Sin, self.precision_center, self.max_power))),
+            Func::Cos => self.operands.push(Operand::Polynomial(TsPoly::from_func(Func::Cos, self.precision_center, self.max_power))),
             Func::Tg => todo!("Implement Taylor generation for Tg"),
             Func::Ctg => todo!("Implement Taylor generation for Ctg"),
-            Func::Ln => self.gen_polys.push(TsPoly::from_func(Func::Ln, self.precision_center, self.max_power)),
-            Func::Exp => self.gen_polys.push(TsPoly::from_func(Func::Exp, self.precision_center, self.max_power)),
-            Func::Sinh => todo!("Implement Taylor generation for Sinh"),
-            Func::Cosh => todo!("Implement Taylor generation for Cosh"),
+            Func::Ln => self.operands.push(Operand::Polynomial(TsPoly::from_func(Func::Ln, self.precision_center, self.max_power))),
+            Func::Exp => self.operands.push(Operand::Polynomial(TsPoly::from_func(Func::Exp, self.precision_center, self.max_power))),
+            Func::Sinh => self.operands.push(Operand::Polynomial(TsPoly::from_func(Func::Sinh, self.precision_center, self.max_power))),
+            Func::Cosh => self.operands.push(Operand::Polynomial(TsPoly::from_func(Func::Cosh, self.precision_center, self.max_power))),
             Func::Tgh => todo!("Implement Taylor generation for Tgh"),
             Func::Ctgh => todo!("Implement Taylor generation for Ctgh"),
             Func::Atg => todo!("Implement Taylor generation for Atg"),
@@ -34,11 +89,11 @@ impl LexemProcessorTaylor{
             Func::Arcosh => todo!("Implement Taylor generation for Arcosh"),
             Func::Artgh => todo!("Implement Taylor generation for Artgh"),
             Func::Arctgh => todo!("Implement Taylor generation for Arctgh"),
-            Func::Sqrt => todo!("Implement sqrt(x)"),
+            Func::Sqrt => self.operands.push(Operand::SqrtOfX),
             unsupported_op => {
                 unrecoverable_error!(
                     "Lexem processor error | Can't generate Taylor sequence for this combination of operands",
-                    format!("{}(x)", unsupported_op)
+                    format!("{unsupported_op}(x)")
                 );
             }
         }
@@ -66,12 +121,12 @@ impl LexemProcessorTaylor{
             Func::Arctgh => todo!("How do I calculate actanh"),
             Func::Ln => self.temp_const = self.temp_const.ln(),
             Func::Exp => self.temp_const = self.temp_const.exp(),
-            Func::Add => todo!(),
-            Func::Sub => todo!(),
-            Func::Mul => todo!(),
-            Func::Div => todo!(),
             Func::Sqrt => self.temp_const = self.temp_const.sqrt(),
-            Func::Pow => todo!(),
+            Func::Add => todo!("Handle binary ops for state 2 - add"), //FIXME All binary ops should put state to 0
+            Func::Sub => todo!("Handle binary ops for state 2 - sub"),
+            Func::Mul => todo!("Handle binary ops for state 2 - mul"),
+            Func::Div => todo!("Handle binary ops for state 2 - div"),
+            Func::Pow => todo!("Handle binary ops for state 2 - pow"),
             unsupported_op => {
                 unrecoverable_error!(
                     "Lexem processor error | Unsupported operation on a constant in a state 2 (see docs for more details)",
@@ -79,7 +134,7 @@ impl LexemProcessorTaylor{
                 );
             }
         }
-        self.state = 0;
+        self.state = 2; //Need this in order to have chained interpreter calls on a const value, if it's not binry op ofc
     }
 
     pub(crate) fn state_3_handler(&mut self){
@@ -89,26 +144,26 @@ impl LexemProcessorTaylor{
                 temp_poly.coefs[1] = self.temp_const;
                 temp_poly.coefs[1] = 1.0;
                 temp_poly.max_pow = 1;
-                self.gen_polys.push(temp_poly);
+                self.operands.push(Operand::Polynomial(temp_poly));
             },
             Func::Sub => {
                 let mut temp_poly = TsPoly::new();
                 temp_poly.coefs[1] = -self.temp_const;
                 temp_poly.coefs[1] = 1.0;
                 temp_poly.max_pow = 1;
-                self.gen_polys.push(temp_poly);
+                self.operands.push(Operand::Polynomial(temp_poly));
             },
             Func::Mul => {
                 let mut temp_poly = TsPoly::new();
                 temp_poly.coefs[1] = self.temp_const;
                 temp_poly.max_pow = 1;
-                self.gen_polys.push(temp_poly);
+                self.operands.push(Operand::Polynomial(temp_poly));
             },
             Func::Div => {
                 let mut temp_poly = TsPoly::new();
                 temp_poly.coefs[1] = 1.0/self.temp_const; //FIXME Handle if temp_const is 0 here, to stop the entire thing
                 temp_poly.max_pow = 1;
-                self.gen_polys.push(temp_poly);
+                self.operands.push(Operand::Polynomial(temp_poly));
             },
             Func::Pow => {
                 if self.temp_const.fract() == 0.0 {
@@ -123,7 +178,7 @@ impl LexemProcessorTaylor{
                     let mut temp_poly = TsPoly::new();
                     temp_poly.max_pow = temp_pow;
                     temp_poly.coefs[temp_pow] = 1.0;
-                    self.gen_polys.push(temp_poly);
+                    self.operands.push(Operand::Polynomial(temp_poly));
                 }else{
                     todo!("Compiler should add powf from std here to achieve: x^{}", self.temp_const);
                 }
@@ -146,20 +201,20 @@ impl LexemProcessorTaylor{
                 temp_poly.coefs[1] = self.temp_const;
                 temp_poly.coefs[1] = 1.0;
                 temp_poly.max_pow = 1;
-                self.gen_polys.push(temp_poly);
+                self.operands.push(Operand::Polynomial(temp_poly));
             },
             Func::Sub => {
                 let mut temp_poly = TsPoly::new();
                 temp_poly.coefs[1] = self.temp_const;
                 temp_poly.coefs[1] = -1.0;
                 temp_poly.max_pow = 1;
-                self.gen_polys.push(temp_poly);
+                self.operands.push(Operand::Polynomial(temp_poly));
             },
             Func::Mul => {
                 let mut temp_poly = TsPoly::new();
                 temp_poly.coefs[1] = self.temp_const;
                 temp_poly.max_pow = 1;
-                self.gen_polys.push(temp_poly);
+                self.operands.push(Operand::Polynomial(temp_poly));
             },
             Func::Div => todo!("For state 4, implement const/x combination"), //TOOD const/x
             Func::Pow => todo!("For state 4, implement const^x combination"), //TODO const^x

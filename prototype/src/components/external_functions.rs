@@ -1,3 +1,5 @@
+//TODO Optimize this to just have f64::[function name] so it doesnt have to have so many jumps
+
 pub fn sin(x: f64) -> f64{
     f64::sin(x)
 }

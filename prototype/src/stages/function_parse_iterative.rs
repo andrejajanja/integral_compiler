@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 use crate::components::object_type_definitions::*;
 use crate::components::terminal_decoration::Color;
-use crate::components::error_types::CompilationError;
 use crate::unrecoverable_error;
 use std::process::exit;
 
@@ -17,7 +16,7 @@ pub fn tree_to_string_iter(root: &Node) -> String {
             Some(mut nd) => {
                 loop{
                     content += &(nd.op.to_string() + ",");
-                    match &nd.second {
+                    match &nd.right {
                         Some(scnd) => {
                             st.push(*scnd.clone());
                         }
@@ -25,7 +24,7 @@ pub fn tree_to_string_iter(root: &Node) -> String {
 
                         }
                     }
-                    match &nd.first {
+                    match &nd.left {
                         Some(x) => {
                             nd = *x.clone();
                             continue;
@@ -44,107 +43,54 @@ pub fn tree_to_string_iter(root: &Node) -> String {
     content
 }
 
-fn try_parsing(chunk: &str) -> Result<Option<Node>, CompilationError> {
+fn try_parsing(chunk: &str, function: &str) -> Option<Node> {
     match chunk.len() {
         1 => {
             match &chunk[..]{
-                "*" => {
-                    return Ok(Some(Node::new_value(Func::Mul, None)));
-                }
-
-                "/" => {
-                    return Ok(Some(Node::new_value(Func::Div, None)));
-                }
-
-                "+" => {
-                    return Ok(Some(Node::new_value(Func::Add, None)));
-                }
-
-                "-" => {
-                    return Ok(Some(Node::new_value(Func::Sub, None)));
-                }
-
-                "^" => {
-                    return Ok(Some(Node::new_value(Func::Pow, None)));
-                }
-
-                "x" => {
-                    return Ok(Some(Node::new_value(Func::X, None)));
-                }
-
-                "(" => {
-                    return Ok(Some(Node::new_value(Func::Ob, None)));
-                }
-
-                ")" => {
-                    return Ok(Some(Node::new_value(Func::Cb, None)));
-                }
-
-                _ => {
-                    return Ok(None);
-                }
+                "*" => return Some(Node::from_func(Func::Mul)),
+                "/" => return Some(Node::from_func(Func::Div)),
+                "+" => return Some(Node::from_func(Func::Add)),
+                "-" => return Some(Node::from_func(Func::Sub)),
+                "^" => return Some(Node::from_func(Func::Pow)),
+                "x" => return Some(Node::from_func(Func::X)),
+                "(" => return Some(Node::from_func(Func::Ob)),
+                ")" => return Some(Node::from_func(Func::Cb)),
+                _ => return None
             }
         }
         2 => {
             match &chunk[..]{
-                "ln" => {
-                    return Ok(Some(Node::new_value(Func::Ln, None)));
-                }
-
-                "e^" => {
-                    return Ok(Some(Node::new_value(Func::Exp, None)));
-                }
-
-                "tg" => {
-                    return Ok(Some(Node::new_value(Func::Tg, None)));
-                }
-
-                _ => {
-                    return Ok(None);
-                }
+                "ln" => return Some(Node::from_func(Func::Ln)),
+                "e^" => return Some(Node::from_func(Func::Exp)),
+                "tg" => return Some(Node::from_func(Func::Tg)),
+                _ => return None
             }
         }
         3 => {
             match &chunk[..]{
-                "sin" => {
-                    return Ok(Some(Node::new_value(Func::Sin, None)));
-                }
-
-                "cos" => {
-                    return Ok(Some(Node::new_value(Func::Cos, None)));
-                }
-
-                "ctg" => {
-                    return Ok(Some(Node::new_value(Func::Ctg, None)));
-                }
-
-                "atg" => {
-                    return Ok(Some(Node::new_value(Func::Atg, None)));
-                }
-
-                "exp" => {
-                    return Ok(Some(Node::new_value(Func::Exp, None)));
-                }
-                
-                _ => {
-                    return Ok(None);
-                }
+                "sin" => return Some(Node::from_func(Func::Sin)),
+                "cos" => return Some(Node::from_func(Func::Cos)),
+                "ctg" => return Some(Node::from_func(Func::Ctg)),
+                "atg" => return Some(Node::from_func(Func::Atg)),
+                "exp" => return Some(Node::from_func(Func::Exp)),
+                _ => return None
             }
         }
         4 => {
             match &chunk[..]{
-                "sqrt" => return Ok(Some(Node::new_value(Func::Sqrt, None))),
-                "asin" => return Ok(Some(Node::new_value(Func::Asin, None))),
-                "acos" => return Ok(Some(Node::new_value(Func::Acos, None))),
-                "actg" => return Ok(Some(Node::new_value(Func::Actg, None))),
-                "atan" => return Ok(Some(Node::new_value(Func::Atg, None))),
-                _ => {
-                    return Ok(None);
-                }
+                "sqrt" => return Some(Node::from_func(Func::Sqrt)),
+                "asin" => return Some(Node::from_func(Func::Asin)),
+                "acos" => return Some(Node::from_func(Func::Acos)),
+                "atan" => return Some(Node::from_func(Func::Atg)),
+                "actg" => return Some(Node::from_func(Func::Actg)),
+                _ => return None
             }
         }
         _ => {
-            return Err(CompilationError::ParsingError);
+            unrecoverable_error!(
+                "Parsing Error | Highlighted part of a function string is unknown/unsupported function",
+                &function.replace(&chunk, &format!("{}{} {} {}{}", Color::CBlack, Color::BYellow,&chunk, Color::CYellow, Color::BBlack))
+            );
         }
     }
 }
@@ -167,31 +113,24 @@ pub fn parse_function(function: &str) -> Vec<Node> {
             break;
         }
 
-        let inter_node: Option<Node>;
+        let temp_node: Option<Node>;
 
         if i == temp{
-            inter_node = match try_parsing(&function[i..i+buffer]) {
-                Ok(value) => value,
-                Err(_e) => {
-                    unrecoverable_error!(
-                        "Parsing Error | Highlighted part of a function string is unknown/unsupported function",
-                        &function.replace(&function[i..i+buffer], &format!("{}{} {} {}{}", Color::CBlack, Color::BYellow,&function[i..i+buffer], Color::CYellow, Color::BBlack))
-                    );
-                },
-            };
+            //FIXME this is where some performance is lost due to elegant error handling
+            temp_node = try_parsing(&function[i..i+buffer], &function);
         }else {
             buffer-=1;
-            inter_node = Some(Node::new_value(Func::Const, Some(
-                match function[i..i + buffer].parse::<f64>() {
-                    Ok(c) => {c}
-                    Err(_c) => {
-                        unrecoverable_error!("Parsing Error | Failed to parse a number in function string", &function[i..i + buffer]);
-                    }
+            let temp_const = match function[i..i + buffer].parse::<f64>() {
+                Ok(c) => c,
+                Err(_c) => {
+                    unrecoverable_error!("Parsing Error | Failed to parse a number in function string", &function[i..i + buffer]);
                 }
-            )));
+            };
+
+            temp_node = Some(Node::from_value(temp_const));
         }
 
-        match inter_node {
+        match temp_node {
             Some(list_node) => {
                 i += buffer;
                 buffer = 1;
@@ -228,7 +167,7 @@ fn in_op_priority(op: &Node) -> u8{
             return 1;
         }
 
-        Func::Const | Func::X=> {
+        Func::Const(_) | Func::X=> {
             return 11;
         }
 
@@ -273,8 +212,8 @@ pub fn vec_node_to_string(ve: &Vec<Node>) -> String{
     for x in ve {
         helper_string += &(x.op.to_string() + " ");
     }
-    helper_string += "\n";
-    helper_string
+
+    helper_string + "\n"
 }
 
 pub fn convert_infix_to_postfix(infix: Vec<Node>) -> Vec<Node>{
@@ -354,11 +293,9 @@ fn postfix_to_tree_verbose(list: &mut Vec<Node>) -> Node {
         }
 
         2 => {
-            //check if this thing works proprely
-            list[1].first = Some(Box::new(list[0].clone()));
+            list[1].left = Some(Box::new(list[0].clone()));
             list.remove(0);
         }
-
         _ => {
             let mut second: usize = 2;
             let mut first: usize = 1;
@@ -372,35 +309,35 @@ fn postfix_to_tree_verbose(list: &mut Vec<Node>) -> Node {
                     print_tree_rec(temp, 0, '\n');
                 }
 
-                if unary_ops.contains(&list[first].op) && list[first].first.is_none(){
-                    list[first].first = Some(Box::new(list[zeroth].clone()));
+                if unary_ops.contains(&list[first].op) && list[first].left.is_none(){
+                    list[first].left = Some(Box::new(list[zeroth].clone()));
                     list.remove(zeroth);
                     i+=1;
                     continue;
                 }
 
-                if (list[second].op == Func::X || list[second].op == Func::Const) && zeroth == 0{
+                if (list[second].op == Func::X || matches!(list[second].op, Func::Const(_))) && zeroth == 0{
                     zeroth+=1;
                     first+=1;
                     second+=1;
                 }
 
-                if zeroth == 1 && unary_ops.contains(&list[zeroth].op) && list[zeroth].first.is_none(){
-                    list[1].first = Some(Box::new(list[0].clone()));
+                if zeroth == 1 && unary_ops.contains(&list[zeroth].op) && list[zeroth].left.is_none(){
+                    list[1].left = Some(Box::new(list[0].clone()));
                     list.remove(0);
                     i+=1;
                     continue;
                 }
 
                 if unary_ops.contains(&list[second].op){
-                    list[second].first = Some(Box::new(list[first].clone()));
+                    list[second].left = Some(Box::new(list[first].clone()));
                     list.remove(first);
                     i+=1;
                     continue;
                 }
                 
-                list[second].first = Some(Box::new(list[first].clone()));
-                list[second].second = Some(Box::new(list[zeroth].clone()));
+                list[second].left = Some(Box::new(list[first].clone()));
+                list[second].right = Some(Box::new(list[zeroth].clone()));
                 list.drain(zeroth..second);        
 
                 if zeroth == 0{
@@ -421,7 +358,7 @@ fn postfix_to_tree_verbose(list: &mut Vec<Node>) -> Node {
             //In case two elements are left,
             //this means some unary operation is on the second place, thus it can be folded deterministicaly.
             if list.len() == 2{
-                list[1].first = Some(Box::new(list[0].clone()));
+                list[1].left = Some(Box::new(list[0].clone()));
                 list.remove(0);
             }
         }
@@ -449,7 +386,7 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
 
         2 => {
             //check if this thing works proprely
-            list[0].first = Some(Box::new(list.remove(0)));
+            list[0].left = Some(Box::new(list.remove(0)));
         }
 
         _ => {
@@ -458,29 +395,29 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
             let mut zeroth: usize = 0;
 
             while list.len() > 2{ //this ensures that the queue is always longer than two elements
-                if unary_ops.contains(&list[first].op) && list[first].first.is_none(){
-                    list[zeroth].first = Some(Box::new(list.remove(zeroth)));
+                if unary_ops.contains(&list[first].op) && list[first].left.is_none(){
+                    list[zeroth].left = Some(Box::new(list.remove(zeroth)));
                     continue;
                 }
 
-                if (list[second].op == Func::X || list[second].op == Func::Const) && zeroth == 0{
+                if (list[second].op == Func::X || matches!(list[second].op,Func::Const(_))) && zeroth == 0{
                     zeroth+=1;
                     first+=1;
                     second+=1;
                 }
 
-                if zeroth == 1 && unary_ops.contains(&list[zeroth].op) && list[zeroth].first.is_none(){
-                    list[0].first = Some(Box::new(list.remove(0)));                    
+                if zeroth == 1 && unary_ops.contains(&list[zeroth].op) && list[zeroth].left.is_none(){
+                    list[0].left = Some(Box::new(list.remove(0)));                    
                     continue;
                 }
 
                 if unary_ops.contains(&list[second].op){
-                    list[first].first = Some(Box::new(list.remove(first)));                                     
+                    list[first].left = Some(Box::new(list.remove(first)));                                     
                     continue;
                 }
                 
-                list[first].first = Some(Box::new(list.remove(first)));
-                list[zeroth].second = Some(Box::new(list.remove(zeroth)));
+                list[first].left = Some(Box::new(list.remove(first)));
+                list[zeroth].right = Some(Box::new(list.remove(zeroth)));
 
                 if zeroth == 0{
                     if list.len() > 3{
@@ -498,7 +435,7 @@ fn postfix_to_tree(list: &mut Vec<Node>) -> Node {
             //In case two elements are left,
             //this means some unary operation is on the second place, thus it can be folded deterministicaly.
             if list.len() == 2{
-                list[0].first = Some(Box::new(list.remove(0)));
+                list[0].left = Some(Box::new(list.remove(0)));
             }
         }
     }
@@ -521,17 +458,17 @@ fn find_unique_funcs_iter(root: &Node) -> Vec<Func>{
         match st.pop(){
             Some(mut nd) => {
                 loop{
-                    if !unique_funcs.contains(&nd.op) &&  nd.op != Func::Const && nd.op != Func::X{
+                    if !unique_funcs.contains(&nd.op) && matches!(nd.op,Func::Const(_)) && nd.op != Func::X{
                         unique_funcs.push(nd.op);
                     }
 
-                    match &nd.second {
+                    match &nd.right {
                         Some(scnd) => {
                             st.push(*scnd.clone());
                         }
                         None => {}
                     }
-                    match &nd.first {
+                    match &nd.left {
                         Some(x) => {
                             nd = *x.clone();
                             continue;
@@ -550,4 +487,3 @@ fn find_unique_funcs_iter(root: &Node) -> Vec<Func>{
 
     unique_funcs
 }
-

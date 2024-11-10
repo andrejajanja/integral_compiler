@@ -4,7 +4,7 @@ use crate::stages::function_parse_iterative::{str_to_tree_iter, tree_to_string_i
 fn gen_1(){
     let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)/cos(x)");
     let root = str_to_tree_iter(&function);
-    assert_eq!(tree_to_string_iter(&root), "-,/,cos,x,tg,-,Const,x,*,e^,+,Const,x,sin,*,x,Const,")
+    assert_eq!(tree_to_string_iter(&root), "-,/,cos,x,tg,-,8,x,*,e^,+,1,x,sin,*,x,7.56,")
 }
 
 #[test]
@@ -25,7 +25,7 @@ fn gen_3(){
 fn gen_4(){
     let function = String::from("3.0*x+7.0");
     let root = str_to_tree_iter(&function);
-    assert_eq!(tree_to_string_iter(&root), "+,Const,*,x,Const,")
+    assert_eq!(tree_to_string_iter(&root), "+,7,*,x,3,")
 }
 
 #[test]

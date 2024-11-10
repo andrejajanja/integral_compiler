@@ -14,6 +14,8 @@ macro_rules! unrecoverable_error {
             $err_cause,
             Color::Reset
         );
+        
         exit(1);
+        //panic!("Paniced here lol");
     };
 }

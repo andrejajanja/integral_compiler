@@ -45,7 +45,7 @@ pub enum Func {
 
     //auxilary
     X,      //function variable
-    Const,  // C, C e R
+    Const(f64),  // C, C e R
     None,   // end of the tree
 }
 
@@ -67,15 +67,15 @@ impl Func {
             Func::Atg | Func::Actg => String::from("atan"),
             Func::Asin => String::from("asin"),
             Func::Acos => String::from("acos"),
-            Func::Sinh => todo!(),
-            Func::Cosh => todo!(),
-            Func::Tgh => todo!(),
-            Func::Ctgh => todo!(),
-            Func::Arsinh => todo!(),
-            Func::Arcosh => todo!(),
-            Func::Artgh => todo!(),
-            Func::Arctgh => todo!(),
-            Func::Ob | Func::Cb | Func::None | Func::Const | Func::X => {
+            Func::Sinh => todo!("sinh"),
+            Func::Cosh => todo!("cosh"),
+            Func::Tgh => todo!("tgh"),
+            Func::Ctgh => todo!("ctgh"),
+            Func::Arsinh => todo!("arsinh"),
+            Func::Arcosh => todo!("arcosh"),
+            Func::Artgh => todo!("artgh"),
+            Func::Arctgh => todo!("arctgh"),
+            Func::Ob | Func::Cb | Func::None | Func::Const(_) | Func::X => {
                 unrecoverable_error!(
                     "Error generating the IR code string",
                     format!("'Func::{:?}' was encountered, which shouldn't be there.", self)
@@ -102,7 +102,7 @@ impl fmt::Display for Func {
             Func::Ln => String::from("ln"),
             Func::Exp => String::from("e^"),
             Func::Sqrt => String::from("sqrt"),
-            Func::Const => String::from("Const"),
+            Func::Const(value) => value.to_string(),
             Func::Atg => String::from("arctg"),
             Func::Asin => String::from("arcsin"),
             Func::Acos => String::from("arccos"),
@@ -125,28 +125,33 @@ impl fmt::Display for Func {
 
 #[derive(Debug,Clone)]
 pub struct Node {
-    pub first: Option<Box<Node>>,
-    pub second: Option<Box<Node>>,
+    pub left: Option<Box<Node>>,
+    pub right: Option<Box<Node>>,
     pub op: Func,
-    pub c: Option<f64>, //if type op = Func::Const
 }
 
 impl Node {
     pub fn new() -> Node {
         Node {
-            first: None,
-            second: None,
+            left: None,
+            right: None,
             op: Func::None,
-            c: None,
         }
     }
 
-    pub fn new_value(fun: Func, con: Option<f64>) -> Node {
+    pub fn from_value(value: f64) -> Node {
         Node {
-            first: None,
-            second: None,
-            op: fun,
-            c: con,
+            left: None,
+            right: None,
+            op: Func::Const(value)
+        }
+    }
+
+    pub fn from_func(operation: Func) -> Node {
+        Node {
+            left: None,
+            right: None,
+            op: operation
         }
     }
 }

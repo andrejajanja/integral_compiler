@@ -8,6 +8,26 @@ use crate::components::{
     polynomials::TsPoly
 };
 
+//TODO Shouldn't I work directly with Func enum, or at least some part of it, isn't it easier, draw some functions and test?
+pub(crate) enum Operand{
+    Polynomial(TsPoly),
+    XPowConst(f64),
+    SqrtOfX,
+    ConstPowX(f64),
+    Const(f64),
+    X
+}
+
+pub(crate) enum Relation{
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Sqrt,
+    Of,
+    Pow
+}
+
 /// # States:
 /// TODO Make this state explanation better
 /// Lexem processor goes trough state while it processes all the lexems.
@@ -20,8 +40,8 @@ use crate::components::{
 /// 4. detected const and x, respectively, waiting for the operation between them.
 pub struct LexemProcessorTaylor{
     pub(crate) lexems: Vec<Node>,
-    pub(crate) gen_polys: Vec<TsPoly>,
-    pub(crate) poly_ops: Vec<Func>,
+    pub(crate) operands: Vec::<Operand>,
+    pub(crate) relations: Vec<Relation>,
     pub(crate) state: u8,
     pub(crate) max_power: usize,
     pub(crate) temp_const: f64,
@@ -30,13 +50,11 @@ pub struct LexemProcessorTaylor{
 }
 
 impl LexemProcessorTaylor{
-    //TODO Add some custom enum to determine ops and that stuff
-
     pub fn new(lexems: Vec<Node>, precision_center: f64, max_power: usize) -> LexemProcessorTaylor {
         LexemProcessorTaylor{
             lexems: lexems,
-            gen_polys: Vec::<TsPoly>::new(),
-            poly_ops: Vec::<Func>::new(),
+            operands: Vec::<Operand>::new(),
+            relations: Vec::<Relation>::new(),
             state: 0,
             max_power: max_power,
             temp_const: 0.0,
@@ -48,18 +66,12 @@ impl LexemProcessorTaylor{
     pub fn process_lexems(&mut self) {
         for elem in self.lexems.clone(){
             self.current_lexem = elem.clone();
-            println!("{} - {}", self.current_lexem.op, self.state);
+            println!("{}", self.current_lexem.op);
 
-            if elem.op == Func::Const{
-                self.temp_const = match elem.c {
-                    Some(c) => c,
-                    None => {
-                        unrecoverable_error!(
-                            "Lexem processor error | Invalid postfix node",
-                            "Node with Const op has None for c value"
-                        );
-                    },
-                };
+            if matches!(elem.op,Func::Const(_)){
+                if let Func::Const(value) = elem.op{
+                    self.temp_const = value;
+                }
 
                 if self.state == 1{
                     self.state = 3;
@@ -80,8 +92,7 @@ impl LexemProcessorTaylor{
             }
 
             match self.state {
-                //State 0 handles multiple things at once, think about making this separate states, most notably poly to poly ops
-                0 => self.state_0_handler(),
+                0 => self.state_0_handler(), //State 0 handles multiple things at once, think about making this separate states, most notably poly to poly ops
                 1 => self.state_1_handler(),
                 2 => self.state_2_handler(),
                 3 => self.state_3_handler(),
@@ -97,6 +108,6 @@ impl LexemProcessorTaylor{
     }
 
     pub fn generate_ir_code(&mut self) -> (String, i16){
-        (String::from("aa"), 0)
+        (String::from("Code"), 0)
     }
 }

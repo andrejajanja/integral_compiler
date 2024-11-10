@@ -49,13 +49,11 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
     let mut operand_stack: Vec<i16> = Vec::<i16>::new();
     let mut const_stack: Vec<String> = Vec::<String>::new();
 
-    let not_unique_funcs: Vec<Func> = vec![Func::Const, Func::X, Func::Add, Func::Sub, Func::Mul, Func::Div];
-
     while !elems.is_empty() {
         let temp = elems.remove(0);
 
         //determining if op should be added to the list of ones to be declared beforehand
-        if !(unique_funcs.contains(&temp.op) || not_unique_funcs.contains(&temp.op)){ //more efficient if :D
+        if !(unique_funcs.contains(&temp.op) || matches!(&temp.op, Func::Const(_) | Func::X | Func::Add | Func::Sub | Func::Mul | Func::Div)){
             unique_funcs.push(temp.op);
         }
 
@@ -94,16 +92,9 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
             Func::X => {
                 operand_stack.push(0)
             },
-            Func::Const => {
-                match temp.c {
-                    Some(c) => {
-                        const_stack.push(format!("{:.6e}", c));
-                        operand_stack.push(-1);
-                    }
-                    None => {
-                        unrecoverable_error!("Frontend error | During compiling of postfix form logical error occured","Node is of op type 'Const', but c is None.");
-                    }
-                }            
+            Func::Const(value) => {
+                const_stack.push(format!("{:.6e}", value));
+                operand_stack.push(-1);     
             },
             _ => {
                 unrecoverable_error!(

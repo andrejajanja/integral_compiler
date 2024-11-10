@@ -145,16 +145,15 @@ impl MulAssign<f64> for TsPoly{
 //     require d ≠ 0
 //     q ← 0
 //     r ← n             // At each step n = d × q + r
-
+//
 //     while r ≠ 0 and degree(r) ≥ degree(d) do
 //         t ← lead(r) / lead(d)       // Divide the leading terms
 //         q ← q + t
 //         r ← r − t × d
-
-//     return (q, r), here +,-,x are polynomial arithmetic operations
+// 
+//     return (q, r) // here +,-,x are polynomial arithmetic operations 
 impl Div for TsPoly{
-    type Output = Self;
-    
+    type Output = Self;       
     fn div(self, rhs: Self) -> Self::Output {
         if rhs.max_pow == 0 && rhs.coefs[0] == 0.0 {
             unrecoverable_error!(
