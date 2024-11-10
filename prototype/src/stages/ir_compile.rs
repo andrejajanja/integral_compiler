@@ -1,13 +1,13 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_imports)]
 use crate::unrecoverable_error;
 use crate::components::{
     object_type_definitions::*,
     terminal_decoration::Color
 };
-use crate::stages::function_parse_iterative::{parse_function, convert_infix_to_postfix};
+use crate::stages::function_parse::{parse_function, convert_infix_to_postfix};
 use std::process::exit;
 
-fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
+fn compile_postfix(mut elems: Vec<Func>) -> (String,Vec<Func>, i16){
     fn safely_pop_from_stacks(op_st: &mut Vec<i16>, cnst_st: &mut Vec<String>, one_two: bool) -> String{
         match op_st.pop() {
             Some(x) => {
@@ -53,17 +53,17 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
         let temp = elems.remove(0);
 
         //determining if op should be added to the list of ones to be declared beforehand
-        if !(unique_funcs.contains(&temp.op) || matches!(&temp.op, Func::Const(_) | Func::X | Func::Add | Func::Sub | Func::Mul | Func::Div)){
-            unique_funcs.push(temp.op);
+        if !(unique_funcs.contains(&temp) || matches!(&temp, Func::Const(_) | Func::X | Func::Add | Func::Sub | Func::Mul | Func::Div)){
+            unique_funcs.push(temp.clone());
         }
 
-        match &temp.op{
+        match &temp{
             //defining the LLVM IR code output for UNARY ops:
             Func::Sqrt | Func::Ln | Func::Exp | Func::Sin | Func::Cos | Func::Tg | Func::Ctg | Func::Asin | Func::Acos | Func::Atg | Func::Actg=> {
                 let oper: String = safely_pop_from_stacks(&mut operand_stack, &mut const_stack, true);
                 address+=1;
-                code += &format!("\t%{} = call double @{}(double {}) nounwind\n", address, temp.op.ir_string(), oper);
-                match temp.op {
+                code += &format!("\t%{} = call double @{}(double {}) nounwind\n", address, temp.ir_string(), oper);
+                match temp {
                     Func::Ctg => {
                         address+=1;
                         code += &format!("\t%{} = fdiv double 1.0, {}\n", address, address-1);
@@ -83,7 +83,7 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
                 let second_oper: String = safely_pop_from_stacks(&mut operand_stack, &mut const_stack, false);
 
                 address+=1;
-                code += &format!("\t%{} = {} double {}, {}\n", address, temp.op.ir_string(), first_oper, second_oper); 
+                code += &format!("\t%{} = {} double {}, {}\n", address, temp.ir_string(), first_oper, second_oper); 
                 
                 operand_stack.push(address);
             },
@@ -99,7 +99,7 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
             _ => {
                 unrecoverable_error!(
                     "Frontend error | During compiling of postfix form",
-                    format!("Failed to compile function due unsupported node type '{}', in postfix form.", temp.op.to_string())
+                    format!("Failed to compile function due unsupported node type '{}', in postfix form.", temp.to_string())
                 );
             }
         }    
@@ -109,10 +109,10 @@ fn compile_postfix(mut elems: Vec<Node>) -> (String,Vec<Func>, i16){
 }
 
 pub fn generate_ir(function: &String) -> String {
-    let function_infix = parse_function(function);
-    let function_postfix = convert_infix_to_postfix(function_infix);
+    let mut function_collection = parse_function(function);
+    convert_infix_to_postfix(&mut function_collection);
 
-    let (mut func_code,functions_to_define, ret_addr) = compile_postfix(function_postfix);
+    let (mut func_code,functions_to_define, ret_addr) = compile_postfix(function_collection);
     let mut code = String::from("");
 
     for elem in functions_to_define {

@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use crate::unrecoverable_error;
 use crate::components::terminal_decoration::Color;
 use crate::components::object_type_definitions::Func;
@@ -8,11 +9,12 @@ use std::process::exit;
 /// Struct for handling, generating and manipulating [Taylor polynomials](https://en.wikipedia.org/wiki/Taylor_series)
 /// # Description-Fields
 /// # Overloaded operators
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TsPoly {
     pub coefs: Vec<f64>,
     pub max_pow: usize
 }
+
 
 impl TsPoly{
     /// Highest default available power of the polynomial. Last element of coefs vector is coefitient next to x^(DEFAULT_MAX_POW-1).

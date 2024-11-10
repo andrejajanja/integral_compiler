@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use crate::unrecoverable_error;
 use crate::components::terminal_decoration::Color;
 

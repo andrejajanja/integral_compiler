@@ -1,12 +1,18 @@
+#![allow(unused_imports)]
 use crate::{components::terminal_decoration::Color, unrecoverable_error};
 use std::{
     fmt,
     process::exit
 };
 
+use super::polynomials::TsPoly;
+
 //TODO Add hyperbolic functions to this enum
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Func {
+    //Values used in subsequent optimization passes
+    Poly(TsPoly),
+
     //Trigonometry functions
     Sin,    // sin(f(x))
     Cos,    // cos(f(x))
@@ -27,7 +33,7 @@ pub enum Func {
     Artgh,   // artgh(f(x))
     Arctgh,   // arctgh(f(x))
 
-    //Exp based functions
+    //Exp functions
     Ln,     // ln(f(x))
     Exp,    // e^(f(x))
 
@@ -40,8 +46,8 @@ pub enum Func {
     Pow,    // g(x)^(f(x))
 
     //brackets
-    Ob, //open bracket
-    Cb, //closed bracket
+    Ob, //open
+    Cb, //closed
 
     //auxilary
     X,      //function variable
@@ -81,6 +87,7 @@ impl Func {
                     format!("'Func::{:?}' was encountered, which shouldn't be there.", self)
                 );
             },
+            Func::Poly(_ts_poly) => todo!(),
         }
     }
 }
@@ -116,7 +123,8 @@ impl fmt::Display for Func {
             Func::Arsinh => String::from("arsinh"),
             Func::Arcosh => String::from("arcosh"),
             Func::Artgh => String::from("artgh"),
-            Func::Arctgh => String::from("arctgh")
+            Func::Arctgh => String::from("arctgh"),
+            Func::Poly(_ts_poly) => String::from("Poly"),
         };
 
         write!(f, "{}", temp)

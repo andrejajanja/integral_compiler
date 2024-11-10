@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use crate::{
     unrecoverable_error,
     components::external_functions::*,

@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_imports)]
 use super::polynomials::TsPoly;
 use crate::unrecoverable_error;
 use crate::components::terminal_decoration::Color;

@@ -12,7 +12,6 @@ extern "C" {
 fn main(){
     generate_taylor_ir(&String::from("sin(x)*e^x+cos(x)*ln(x)"), 0.0, 9);
     // let mut a = TsPoly::from_func(Func::Exp, 1.5, 8);
-
     // let b = TsPoly::from_func(Func::Sin, 1.5, 8);
     // a.of(b);
     // a.truncate(10);
@@ -21,5 +20,5 @@ fn main(){
 
 #[cfg(test)]
 mod tests {
-    mod unit_parsing;
+    mod unit_parsing_postfix;
 }
