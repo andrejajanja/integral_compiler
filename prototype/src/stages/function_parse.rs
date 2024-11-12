@@ -145,73 +145,24 @@ pub fn parse_function(function: &str) -> Vec<Func> {
 
 fn in_op_priority(op: &Func) -> u8{
     match op{
-        Func::Add | Func::Sub=> {
-            return 2;
-        }
-
-        Func::Mul | Func::Div => {
-            return 3;
-        }
-        
-        Func::Pow => {
-            return 5;
-        }
-
-        Func::Ob => {
-            return 9;
-        }
-
-        Func::Cb => {
-            return 1;
-        }
-
-        Func::Const(_) | Func::X=> {
-            return 11;
-        }
-
-        //all other functions that behave as unary operators in this stack coversion
-        _ => {
-            return 8;
-        }
+        Func::Add | Func::Sub => 2,
+        Func::Mul | Func::Div => 4,
+        Func::Pow => 5,
+        Func::Ob => 0,
+        Func::Cb => 1,
+        Func::Const(_) | Func::X => 11,
+        _ => 8 //all other functions that behave as unary operators in this stack conversion
     }
 }
 
 fn st_op_priority(op: &Func) -> u8{
     match op{
-        Func::Add | Func::Sub=> {
-            return 2;
-        }
-
-        Func::Mul | Func::Div => {
-            return 3;
-        }
-        
-        Func::Pow => {
-            return 4;
-        }
-
-        Func::Ob => {
-            return 0;
-        }
-
-        Func::Cb => {
-            return 0;
-        }
-
-        _ => {
-            return 7;
-        }
+        Func::Add | Func::Sub => 2,
+        Func::Mul | Func::Div => 4,
+        Func::Pow => 5,
+        Func::Ob => 0,
+        _ => 7
     }
-}
-
-pub fn vec_node_to_string(ve: &Vec<Node>) -> String{
-    let mut helper_string = String::new();
-
-    for x in ve {
-        helper_string += &(x.op.to_string() + " ");
-    }
-
-    helper_string + "\n"
 }
 
 pub fn convert_infix_to_postfix(infix: &mut Vec<Func>){
@@ -219,48 +170,39 @@ pub fn convert_infix_to_postfix(infix: &mut Vec<Func>){
     let mut stack: Vec<Func> = Vec::<Func>::new();
 
     let mut i: usize = 0;
-
     while i < infix.len() {
-        if in_op_priority(&infix[i]) == 11 {
-            postfix.push(infix[i].clone());
-            i+=1;
-            continue;
-        }
-
-        let mut stack_top: Option<Func> = stack.pop();
-
-        loop {
-            match stack_top {
-                Some(x) => {
-                    if in_op_priority(&infix[i]) < st_op_priority(&x) {                                                                                            
-                        postfix.push(x.clone());
-                        stack_top = stack.pop();          
-                    }else{
-                        stack.push(x.clone());
+        let token = infix[i].clone();
+        println!("{:?}", stack);
+        match token {
+            Func::Ob => stack.push(Func::Ob),
+            Func::Const(_) | Func::X => postfix.push(token),
+            Func::Cb => {
+                while let Some(top) = stack.pop() {
+                    if top == Func::Ob {
+                        break;
+                    }
+                    postfix.push(top);
+                }
+            },
+            _ => {
+                while let Some(top) = stack.last() {
+                    if in_op_priority(&token) <= st_op_priority(top) {
+                        postfix.push(stack.pop().unwrap());
+                    } else {
                         break;
                     }
                 }
-                None => break
+                stack.push(token.clone());
             }
         }
-
-        if infix[i] != Func::Cb {
-            stack.push(infix[i].clone());
-        }else{            
-            stack.pop();
-        }        
         
         i+=1;
     }
 
-    loop {
-        let last_on_stack: Func = match stack.pop() {
-            Some(element) => element,
-            None => break
-        };
-
-        postfix.push(last_on_stack);
+    while let Some(op) = stack.pop() {
+        postfix.push(op);
     }
+
     *infix = postfix;
 }
 

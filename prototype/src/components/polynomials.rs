@@ -24,57 +24,18 @@ impl TsPoly{
         TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: 0}
     }
 
-    pub fn from_func(fun: Func, mut offset: f64, max_p: usize) -> TsPoly{
-        if max_p >= Self::DEFAULT_MAX_POW {
-            unrecoverable_error!(
-                "Frontend error | Invalid argument max_p when generating Taylor's polynomial for a Func value",
-                format!("max_p({}) >= DEFAULT_MAX_POW({})", max_p, Self::DEFAULT_MAX_POW-1)
-            );
-        }
-
-        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
-        
-        match fun{
-            Func::Sin => Self::generate_sin(&mut temp, &mut offset, max_p),
-            Func::Cos => Self::generate_cos(&mut temp, &mut offset, max_p),
-            Func::Tg => todo!(),
-            Func::Ctg => todo!(),
-            Func::Ln => Self::generate_ln(&mut temp, offset, max_p),
-            Func::Exp => Self::generate_exp(&mut temp, offset, max_p),
-            Func::Atg => todo!(),
-            Func::Actg => todo!(),
-            Func::Asin => todo!(),
-            Func::Acos => todo!(),
-            Func::Sinh => Self::generate_sinh(&mut temp, offset, max_p),
-            Func::Cosh => Self::generate_cosh(&mut temp, offset, max_p),
-            Func::Tgh => todo!(),
-            Func::Ctgh => todo!(),
-            Func::Arsinh => todo!(),
-            Func::Arcosh => todo!(),
-            Func::Artgh => todo!(),
-            Func::Arctgh => todo!(),
-            _ => {
-                unrecoverable_error!("Taylor generation error | Can't/Shouldn't generate Taylor's polynomial for this Func value", fun);
-            }
-        }
-
-        if offset == 0.0{
-            return temp;
-        }
-
+    pub fn put_offset(&mut self, mut offset: f64){
+        if offset == 0.0 {return;}
         offset = -offset;
-
         for power in 1..Self::DEFAULT_MAX_POW{
-            if temp.coefs[power] != 0.0 {
-                let current_coef = temp.coefs[power];
-                temp.coefs[0] += current_coef*offset.powf(power as f64);
+            if self.coefs[power] != 0.0 {
+                let current_coef = self.coefs[power];
+                self.coefs[0] += current_coef*offset.powf(power as f64);
                 for index in 1..power{
-                    temp.coefs[power-index] += current_coef*Self::binomial_coef(power, index)*offset.powf(index as f64);
+                    self.coefs[power-index] += current_coef*Self::binomial_coef(power, index)*offset.powf(index as f64);
                 }
             }
         }
-
-        temp
     }
 
     pub fn from_const(constant: f64) -> TsPoly {
@@ -89,7 +50,7 @@ impl TsPoly{
     }
 
     //TODO Make this function a table look up for speed
-    fn binomial_coef(n: usize, k: usize) -> f64{
+    pub(crate) fn binomial_coef(n: usize, k: usize) -> f64{
         if k > n {
             return 0.0;
         }
