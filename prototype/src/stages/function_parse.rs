@@ -4,84 +4,47 @@ use crate::components::terminal_decoration::Color;
 use crate::unrecoverable_error;
 use std::process::exit;
 
-pub fn tree_to_string_iter(root: &Node) -> String {
-    let helper_root = root.clone();
-    let mut content = String::from("");
-    let mut st: Vec<Node> = Vec::<Node>::new();
-    st.push(helper_root);
-    loop {
-        match st.pop(){
-            Some(mut nd) => {
-                loop{
-                    content += &(nd.op.to_string() + ",");
-                    match &nd.right {
-                        Some(scnd) => {
-                            st.push(*scnd.clone());
-                        }
-                        None => {
-
-                        }
-                    }
-                    match &nd.left {
-                        Some(x) => {
-                            nd = *x.clone();
-                            continue;
-                        }
-                        None => {
-                            break;
-                        }
-                    } 
-                }
-            }
-            None => {
-                break;
-            }
-        }
-    }
-    content
-}
-
 fn try_parsing(chunk: &str, function: &str) -> Option<Func> {
     match chunk.len() {
         1 => {
             match &chunk[..]{
-                "*" => return Some(Func::Mul),
-                "/" => return Some(Func::Div),
-                "+" => return Some(Func::Add),
-                "-" => return Some(Func::Sub),
-                "^" => return Some(Func::Pow),
-                "x" => return Some(Func::X),
-                "(" => return Some(Func::Ob),
-                ")" => return Some(Func::Cb),
-                _ => return None
+                "*" => Some(Func::Mul),
+                "/" => Some(Func::Div),
+                "+" => Some(Func::Add),
+                "-" => Some(Func::Sub),
+                "^" => Some(Func::Pow),
+                "x" => Some(Func::X),
+                "(" => Some(Func::Ob),
+                ")" => Some(Func::Cb),
+                _ => None
             }
         }
         2 => {
             match &chunk[..]{
-                "ln" => return Some(Func::Ln),
-                "e^" => return Some(Func::Exp),
-                "tg" => return Some(Func::Tg),
-                _ => return None
+                "ln" => Some(Func::Ln),
+                "e^" => Some(Func::Exp),
+                "tg" => Some(Func::Tg),
+                _ => None
             }
         }
         3 => {
             match &chunk[..]{
-                "sin" => return Some(Func::Sin),
-                "cos" => return Some(Func::Cos),
-                "ctg" => return Some(Func::Ctg),
-                "atg" => return Some(Func::Atg),
-                "exp" => return Some(Func::Exp),
-                _ => return None
+                "sin" => Some(Func::Sin),
+                "cos" => Some(Func::Cos),
+                "ctg" => Some(Func::Ctg),
+                "atg" => Some(Func::Atg),
+                "exp" => Some(Func::Exp),
+                _ => None
             }
         }
         4 => {
             match &chunk[..]{
-                "sqrt" => return Some(Func::Sqrt),
-                "asin" => return Some(Func::Asin),
-                "acos" => return Some(Func::Acos),
-                "atan" => return Some(Func::Atg),
-                "actg" => return Some(Func::Actg),
-                _ => return None
+                "sqrt" => Some(Func::Sqrt),
+                "asin" => Some(Func::Asin),
+                "acos" => Some(Func::Acos),
+                "atan" => Some(Func::Atg),
+                "actg" => Some(Func::Actg),
+                _ => None
             }
         }
         _ => {
@@ -94,7 +57,7 @@ fn try_parsing(chunk: &str, function: &str) -> Option<Func> {
 }
 
 pub fn parse_function(function: &str) -> Vec<Func> {
-    let mut list: Vec<Func> = Vec::<Func>::new();
+    let mut tokens: Vec<Func> = Vec::<Func>::new();
 
     let mut i: usize = 0;
     let mut buffer: usize = 1;
@@ -114,17 +77,13 @@ pub fn parse_function(function: &str) -> Vec<Func> {
         let temp_node: Option<Func>;
 
         if i == temp{
-            //FIXME this is where some performance is lost due to elegant error handling
-            temp_node = try_parsing(&function[i..i+buffer], &function);
+            temp_node = try_parsing(&function[i..i+buffer], &function); //FIXME this is where some performance is lost due to elegant error handling
         }else {
             buffer-=1;
-            let temp_const = match function[i..i + buffer].parse::<f64>() {
-                Ok(c) => c,
-                Err(_c) => {
-                    unrecoverable_error!("Parsing Error | Failed to parse a number in function string", &function[i..i + buffer]);
-                }
-            };
-
+            let temp_const = function[i..i + buffer].parse::<f64>().unwrap_or_else( |_op| {
+                unrecoverable_error!("Parsing Error | Failed to parse a number in function string", &function[i..i + buffer]);
+                69.69
+            });
             temp_node = Some(Func::Const(temp_const));
         }
 
@@ -132,15 +91,13 @@ pub fn parse_function(function: &str) -> Vec<Func> {
             Some(list_node) => {
                 i += buffer;
                 buffer = 1;
-                list.push(list_node);
-            }
-            None => {
-                buffer+=1;
-            }
+                tokens.push(list_node);
+            },
+            None => buffer+=1
         }
     }
 
-    list
+    tokens
 }
 
 fn in_op_priority(op: &Func) -> u8{
@@ -171,37 +128,31 @@ pub fn convert_infix_to_postfix(infix: &mut Vec<Func>){
 
     let mut i: usize = 0;
     while i < infix.len() {
-        let token = infix[i].clone();
-        println!("{:?}", stack);
-        match token {
+        match &infix[i] {
             Func::Ob => stack.push(Func::Ob),
-            Func::Const(_) | Func::X => postfix.push(token),
+            Func::Const(_) | Func::X => postfix.push(infix[i].clone()),
             Func::Cb => {
                 while let Some(top) = stack.pop() {
-                    if top == Func::Ob {
-                        break;
-                    }
+                    if top == Func::Ob { break; }
                     postfix.push(top);
                 }
             },
             _ => {
                 while let Some(top) = stack.last() {
-                    if in_op_priority(&token) <= st_op_priority(top) {
+                    if in_op_priority(&infix[i]) <= st_op_priority(top) {
                         postfix.push(stack.pop().unwrap());
                     } else {
                         break;
                     }
                 }
-                stack.push(token.clone());
+                stack.push(infix[i].clone());
             }
         }
         
         i+=1;
     }
 
-    while let Some(op) = stack.pop() {
-        postfix.push(op);
-    }
+    while let Some(op) = stack.pop() { postfix.push(op); }
 
     *infix = postfix;
 }
@@ -220,6 +171,36 @@ fn find_unique_funcs_iter(root: &Node) -> Vec<Func>{
                         unique_funcs.push(nd.op);
                     }
 
+                    match &nd.right {
+                        Some(scnd) => st.push(*scnd.clone()),
+                        None => {}
+                    }
+                    match &nd.left {
+                        Some(x) => {
+                            nd = *x.clone();
+                            continue;
+                        }
+                        None => break,
+                    } 
+                }
+            }
+            None => break,
+        }
+    }
+
+    unique_funcs
+}
+
+pub fn tree_to_string_iter(root: &Node) -> String {
+    let helper_root = root.clone();
+    let mut content = String::from("");
+    let mut st: Vec<Node> = Vec::<Node>::new();
+    st.push(helper_root);
+    loop {
+        match st.pop(){
+            Some(mut nd) => {
+                loop{
+                    content += &(nd.op.to_string() + ",");
                     match &nd.right {
                         Some(scnd) => {
                             st.push(*scnd.clone());
@@ -242,7 +223,5 @@ fn find_unique_funcs_iter(root: &Node) -> Vec<Func>{
             }
         }
     }
-
-    unique_funcs
+    content
 }
-
