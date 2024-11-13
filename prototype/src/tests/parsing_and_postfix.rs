@@ -1,4 +1,7 @@
-use crate::stages::function_parse::{parse_function, convert_infix_to_postfix};
+use crate::stages::function_parse::{
+    parse_function,
+    convert_infix_to_postfix
+};
 
 #[test]
 fn gen_1(){
@@ -153,7 +156,7 @@ fn panic_gen_0(){
 #[test]
 #[should_panic]
 fn panic_gen_1(){
-    let function = String::from("x*x+cus*x");
+    let function = String::from("cus*x+x*x");
     let mut sequence = parse_function(&function);
     convert_infix_to_postfix(&mut sequence);
 

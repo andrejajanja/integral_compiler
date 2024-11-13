@@ -546,7 +546,7 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
 }
 
 //FIXME Optimize all these clone operations in handler functions
-fn optimize_postfix_using_tylor(sequence: &mut Vec<Func>, precision_center: f64, poly_degre: usize){
+pub fn optimize_postfix_using_tylor(sequence: &mut Vec<Func>, precision_center: f64, poly_degre: usize){
     let mut index: usize = 1;
     while index < sequence.len() {
         let mut current_elem = sequence[index-1].clone();
