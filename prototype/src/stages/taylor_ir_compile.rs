@@ -400,6 +400,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
     }
 }
 
+///Polynomial is the first operand, but &mut sequence[*index-2] is the first operand for binary operation, while polynomial is the second operand
 #[inline(always)]
 fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, index: &mut usize, precision_center: f64, poly_degre: usize){
     match operation {
@@ -566,13 +567,13 @@ fn optimize_postfix_using_tylor(sequence: &mut Vec<Func>, precision_center: f64,
 pub fn generate_taylor_ir(function: &String, precision_center: f64, poly_degre: usize) -> String {
     let mut sequence = parse_function(function);
     convert_infix_to_postfix(&mut sequence);
-    optimize_postfix_using_tylor(&mut sequence, precision_center, poly_degre);
-    // let mut temp_str = String::new();
-    // for elem in sequence {
-    //     temp_str += &elem.to_string();
-    //     temp_str += ",";
-    // }
-    // println!("{}", temp_str);
+    // optimize_postfix_using_tylor(&mut sequence, precision_center, poly_degre);
+    let mut temp_str = String::new();
+    for elem in sequence {
+        temp_str += &elem.to_string();
+        temp_str += ",";
+    }
+    println!("{}", temp_str);
 
     // format!("\ndefine double @fja(double %x){{\n{}\tret double %{}\n}}", func_code, ret_addr+1)
     String::from("A")

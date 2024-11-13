@@ -77,9 +77,83 @@ fn gen_5(){
 }
 
 #[test]
-#[should_panic]
 fn gen_6(){
+    let function = String::from("cos(x)-e^x-sin(x+7)+ln(x)");
+    let mut sequence = parse_function(&function);
+    convert_infix_to_postfix(&mut sequence);
+
+    let mut temp_str = String::new();
+    for elem in sequence {
+        temp_str += &elem.to_string();
+        temp_str += ",";
+    }
+
+    assert_eq!(temp_str, "x,cos,x,e^,-,x,7,+,sin,-,x,ln,+,")
+}
+
+#[test]
+fn gen_7(){
+    let function = String::from("1.89*x+x^2-3*x^7");
+    let mut sequence = parse_function(&function);
+    convert_infix_to_postfix(&mut sequence);
+
+    let mut temp_str = String::new();
+    for elem in sequence {
+        temp_str += &elem.to_string();
+        temp_str += ",";
+    }
+
+    assert_eq!(temp_str, "1.89,x,*,x,2,^,+,3,x,7,^,*,-,")
+}
+
+#[test]
+fn gen_8(){
+    let function = String::from("sin(cos(e^(tg(3+x^2))))");
+    let mut sequence = parse_function(&function);
+    convert_infix_to_postfix(&mut sequence);
+
+    let mut temp_str = String::new();
+    for elem in sequence {
+        temp_str += &elem.to_string();
+        temp_str += ",";
+    }
+
+    assert_eq!(temp_str, "3,x,2,^,+,tg,e^,cos,sin,")
+}
+
+#[test]
+fn gen_9(){
+    let function = String::from("x+9+x+x-x+2*x-x+8");
+    let mut sequence = parse_function(&function);
+    convert_infix_to_postfix(&mut sequence);
+
+    let mut temp_str = String::new();
+    for elem in sequence {
+        temp_str += &elem.to_string();
+        temp_str += ",";
+    }
+
+    assert_eq!(temp_str, "x,9,+,x,+,x,+,x,-,2,x,*,+,x,-,8,+,")
+}
+
+#[test]
+#[should_panic]
+fn panic_gen_0(){
     let function = String::from("x*random(x)");
+    let mut sequence = parse_function(&function);
+    convert_infix_to_postfix(&mut sequence);
+
+    let mut temp_str = String::new();
+    for elem in sequence {
+        temp_str += &elem.to_string();
+        temp_str += ",";
+    }
+}
+
+#[test]
+#[should_panic]
+fn panic_gen_1(){
+    let function = String::from("x*x+cus*x");
     let mut sequence = parse_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
