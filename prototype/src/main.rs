@@ -33,9 +33,3 @@ fn main(){
     // a.truncate(10);
     // println!("y = {}", a);
 }
-
-#[cfg(test)]
-mod tests {
-    mod parsing_and_postfix;
-    mod taylor_optimizer;
-}

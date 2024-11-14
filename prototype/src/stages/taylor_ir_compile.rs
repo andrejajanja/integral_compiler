@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use crate::{
-    components::{object_type_definitions::Func, polynomials::TsPoly, terminal_decoration::Color}, 
+    components::{object_type_definitions::Func, polynomials::TsPoly},
     stages::function_parse::{convert_infix_to_postfix, parse_function}
 };
 
@@ -108,7 +108,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
         Func::Add => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.max_pow = 1;
                     temp.coefs[0] = value;
                     temp.coefs[1] = 1.0;
@@ -135,7 +135,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
         Func::Sub => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.max_pow = 1;
                     temp.coefs[0] = -value;
                     temp.coefs[1] = 1.0;
@@ -162,7 +162,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
         Func::Mul => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.max_pow = 1;
                     temp.coefs[1] = value;
                     sequence[*index-2] = Func::Poly(temp);
@@ -188,7 +188,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
         Func::Div => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.max_pow = 1;
                     temp.coefs[1] = 1.0/value;
                     sequence[*index-2] = Func::Poly(temp);
@@ -215,7 +215,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
             match &mut sequence[*index-2] {
                 Func::X => {
                     if value == 0.0 {
-                        let mut temp = TsPoly::new();
+                        let mut temp = TsPoly::zero();
                         temp.max_pow = 1;
                         temp.coefs[0] = 1.0;
                         sequence[*index-2] = Func::Poly(temp);
@@ -223,7 +223,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
                         sequence.remove(*index-1);
                         *index-=2;
                     }else if value < TsPoly::DEFAULT_MAX_POW as f64 && value > 0.0 && value.fract() == 0.0 {
-                        let mut temp = TsPoly::new();
+                        let mut temp = TsPoly::zero();
                         temp.max_pow = value as usize;
                         temp.coefs[temp.max_pow] = 1.0;
                         sequence[*index-2] = Func::Poly(temp);
@@ -294,7 +294,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
         Func::Add => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.max_pow = 1;
                     temp.coefs[1] = 2.0;
                     sequence[*index-2] = Func::Poly(temp);
@@ -303,7 +303,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.max_pow = 1;
                     temp.coefs[0] = *value;
                     temp.coefs[1] = 1.0;
@@ -332,7 +332,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.max_pow = 1;
                     temp.coefs[0] = *value;
                     temp.coefs[1] = -1.0;
@@ -356,7 +356,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
         Func::Mul => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.max_pow = 2;
                     temp.coefs[2] = 1.0;
                     sequence[*index-2] = Func::Poly(temp);
@@ -365,7 +365,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.max_pow = 1;
                     temp.coefs[1] = *value;
                     sequence[*index-2] = Func::Poly(temp);
@@ -374,7 +374,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
                     *index-=2;
                 }
                 Func::Poly(poly) => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.max_pow = 1;
                     temp.coefs[1] = 1.0;
                     *poly*=temp;
@@ -490,7 +490,7 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
         Func::Sub => {
             match &sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.coefs[1] -= 1.0;
                     temp.max_pow = 1;
                     sequence[*index-2] = Func::Poly(temp-poly.clone());
@@ -499,7 +499,7 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.coefs[0] = *value;
                     sequence[*index-2] = Func::Poly(temp-poly.clone());
                     sequence.remove(*index);
@@ -518,7 +518,7 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
         Func::Mul => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::new();
+                    let mut temp = TsPoly::zero();
                     temp.max_pow = 1;
                     temp.coefs[1] = 1.0;
                     sequence[*index-2] = Func::Poly(temp*poly.clone());
@@ -564,7 +564,7 @@ pub fn optimize_postfix_using_tylor(sequence: &mut Vec<Func>, precision_center: 
     }
 }
 
-pub fn generate_taylor_ir(function: &String, precision_center: f64, poly_degre: usize) -> String {
+pub fn generate_taylor_ir(function: &String, _precision_center: f64, _poly_degre: usize) -> String {
     let mut sequence = parse_function(function);
     convert_infix_to_postfix(&mut sequence);
     // optimize_postfix_using_tylor(&mut sequence, precision_center, poly_degre);

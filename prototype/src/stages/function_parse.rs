@@ -82,7 +82,6 @@ pub fn parse_function(function: &str) -> Vec<Func> {
             buffer-=1;
             let temp_const = function[i..i + buffer].parse::<f64>().unwrap_or_else( |_op| {
                 unrecoverable_error!("Parsing Error | Failed to parse a number in function string", &function[i..i + buffer]);
-                69.69
             });
             temp_node = Some(Func::Const(temp_const));
         }

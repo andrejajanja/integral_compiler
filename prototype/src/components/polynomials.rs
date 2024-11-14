@@ -20,8 +20,21 @@ impl TsPoly{
     /// Highest default available power of the polynomial. Last element of coefs vector is coefitient next to x^(DEFAULT_MAX_POW-1).
     pub(crate) const DEFAULT_MAX_POW: usize = 30;
 
-    pub fn new() -> TsPoly{
-        TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: 0}
+    pub fn zero() -> Self{
+        Self { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: 0}
+    }
+
+    pub fn from_vec(mut provided_coefs: Vec<f64>) -> Self{
+        provided_coefs.resize(Self::DEFAULT_MAX_POW, 0.0);
+        let mut temp_pow: usize = 1;
+        while temp_pow != Self::DEFAULT_MAX_POW && provided_coefs[temp_pow] != 0.0{
+            temp_pow+=1;
+        }
+        if temp_pow == Self::DEFAULT_MAX_POW {
+            temp_pow = 0;
+        }
+
+        Self { coefs: provided_coefs, max_pow: temp_pow}
     }
 
     pub fn put_offset(&mut self, mut offset: f64){
