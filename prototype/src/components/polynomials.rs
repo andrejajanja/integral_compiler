@@ -11,10 +11,9 @@ use std::process::exit;
 /// # Overloaded operators
 #[derive(Debug, Clone, PartialEq)]
 pub struct TsPoly {
-    pub coefs: Vec<f64>,
-    pub max_pow: usize
+    pub(crate) coefs: Vec<f64>,
+    pub(crate) max_pow: usize
 }
-
 
 impl TsPoly{
     /// Highest default available power of the polynomial. Last element of coefs vector is coefitient next to x^(DEFAULT_MAX_POW-1).
@@ -26,14 +25,12 @@ impl TsPoly{
 
     pub fn from_vec(mut provided_coefs: Vec<f64>) -> Self{
         provided_coefs.resize(Self::DEFAULT_MAX_POW, 0.0);
-        let mut temp_pow: usize = 1;
-        while temp_pow != Self::DEFAULT_MAX_POW && provided_coefs[temp_pow] != 0.0{
-            temp_pow+=1;
+        let mut temp_pow: usize = 0;
+        for i in 0..Self::DEFAULT_MAX_POW {
+            if provided_coefs[i] != 0.0 {
+                temp_pow = i;
+            }
         }
-        if temp_pow == Self::DEFAULT_MAX_POW {
-            temp_pow = 0;
-        }
-
         Self { coefs: provided_coefs, max_pow: temp_pow}
     }
 
@@ -51,7 +48,7 @@ impl TsPoly{
         }
     }
 
-    pub fn from_const(constant: f64) -> TsPoly {
+    pub fn from_const(constant: f64) -> Self {
         let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: 0};
         temp.coefs[0] = constant;
         temp
@@ -59,6 +56,7 @@ impl TsPoly{
 
     /// Sets coefitiens to 0 from x^new_max_pow+1 monom till the end (DEFAULT_MAX_POW-1th power)
     pub fn truncate(&mut self, new_max_pow: usize){
+        self.max_pow = new_max_pow;
         self.coefs[new_max_pow+1..Self::DEFAULT_MAX_POW].fill(0.0);
     }
 

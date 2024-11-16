@@ -1,10 +1,6 @@
 #![allow(dead_code)]
-
-use std::{
-    io::stdin,
-    process::exit,
-    fs::read_to_string
-};
+use std::fs::read_to_string;
+use serde::Deserialize;
 
 pub fn print_help() {
     println!("
@@ -30,70 +26,6 @@ pub fn print_help() {
     
     Made by Andreja Janković; Year 2024; E-mail: andrejajanja@gmail.com\n\n");
 }
-
-pub fn pnc_not_impl() {
-    panic!("NOT YET IMPLEMENTED");
-}
-
-pub fn parse_inputs() -> (String, f64, f64, u64){
-    let mut function = String::from("");
-
-    println!("f(x) = ");
-    stdin().read_line(&mut function).unwrap_or_else(|err| {
-        println!("\n\nError while taking a function input: {err}\n\n");
-        exit(0);
-    });
-    function.pop(); //remove the newline character
-
-    let mut parameters: String = String::new();
-    print!("\nrange start, range end, step count: \n");
-    stdin().read_line(&mut parameters).unwrap_or_else(|err| {
-        println!("\n\nError while taking a parameter input: {err}\n\n");
-        exit(0);
-    });
-
-    parameters.pop();
-    let provided: Vec<&str> = parameters.split(" ").collect();
-
-    if provided.len() != 3 {
-        println!("Parameters entered in insufficient format, please try again.");
-        exit(0);
-    }
-
-    let start = match provided[0].parse::<f64>() {
-        Ok(x) => x,
-        Err(e) => {
-            println!(
-                "\n\nError parsing range start argument: {e}\nthis is the value passed: '{}'\n\n",
-                provided[0]
-            );
-            exit(0);
-        }
-    };
-
-    let end = match provided[1].parse::<f64>() {
-        Ok(x) => x,
-        Err(e) => {
-            println!(
-                "\n\nError parsing range end argument: {e}\nthis is the value passed: '{}'\n\n",
-                provided[1]
-            );
-            exit(0);
-        }
-    };
-
-    let steps = match provided[2].parse::<u64>() {
-        Ok(num) => num,
-        Err(e) => {
-            println!("\n\nError parsing number of steps argument: {e}\nthis is the value passed: '{}'\n\n", provided[2]);
-            exit(0);
-        }
-    };
-
-    (function, start, end, steps)
-}
-
-use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 struct Config{

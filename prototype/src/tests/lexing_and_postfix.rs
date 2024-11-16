@@ -1,12 +1,12 @@
-use crate::stages::function_parse::{
-    parse_function,
+use crate::stages::function_lexing::{
+    lex_function,
     convert_infix_to_postfix
 };
 
 #[test]
 fn gen_1(){
     let function = String::from("sin(7.56*x)*e^(x+1)-tg(x-8)/cos(x)");
-    let mut sequence = parse_function(&function);
+    let mut sequence = lex_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
     let mut temp_str = String::new();
@@ -22,7 +22,7 @@ fn gen_1(){
 #[test]
 fn gen_2(){
     let function = String::from("sin(x)*e^(x)+cos(x)*ln(x)");
-    let mut sequence = parse_function(&function);
+    let mut sequence = lex_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
     let mut temp_str = String::new();
@@ -37,7 +37,7 @@ fn gen_2(){
 #[test]
 fn gen_3(){
     let function = String::from("sin(x)");
-    let mut sequence = parse_function(&function);
+    let mut sequence = lex_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
     let mut temp_str = String::new();
@@ -52,7 +52,7 @@ fn gen_3(){
 #[test]
 fn gen_4(){
     let function = String::from("3.0*x+7.0");
-    let mut sequence = parse_function(&function);
+    let mut sequence = lex_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
     let mut temp_str = String::new();
@@ -67,7 +67,7 @@ fn gen_4(){
 #[test]
 fn gen_5(){
     let function = String::from("x*exp(x)");
-    let mut sequence = parse_function(&function);
+    let mut sequence = lex_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
     let mut temp_str = String::new();
@@ -82,7 +82,7 @@ fn gen_5(){
 #[test]
 fn gen_6(){
     let function = String::from("cos(x)-e^x-sin(x+7)+ln(x)");
-    let mut sequence = parse_function(&function);
+    let mut sequence = lex_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
     let mut temp_str = String::new();
@@ -97,7 +97,7 @@ fn gen_6(){
 #[test]
 fn gen_7(){
     let function = String::from("1.89*x+x^2-3*x^7");
-    let mut sequence = parse_function(&function);
+    let mut sequence = lex_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
     let mut temp_str = String::new();
@@ -112,7 +112,7 @@ fn gen_7(){
 #[test]
 fn gen_8(){
     let function = String::from("sin(cos(e^(tg(3+x^2))))");
-    let mut sequence = parse_function(&function);
+    let mut sequence = lex_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
     let mut temp_str = String::new();
@@ -127,7 +127,7 @@ fn gen_8(){
 #[test]
 fn gen_9(){
     let function = String::from("x+9+x+x-x+2*x-x+8");
-    let mut sequence = parse_function(&function);
+    let mut sequence = lex_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
     let mut temp_str = String::new();
@@ -143,7 +143,7 @@ fn gen_9(){
 #[should_panic]
 fn panic_gen_0(){
     let function = String::from("x*random(x)");
-    let mut sequence = parse_function(&function);
+    let mut sequence = lex_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
     let mut temp_str = String::new();
@@ -157,7 +157,7 @@ fn panic_gen_0(){
 #[should_panic]
 fn panic_gen_1(){
     let function = String::from("cus*x+x*x");
-    let mut sequence = parse_function(&function);
+    let mut sequence = lex_function(&function);
     convert_infix_to_postfix(&mut sequence);
 
     let mut temp_str = String::new();

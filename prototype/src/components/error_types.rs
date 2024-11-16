@@ -1,6 +1,6 @@
 #[derive(Debug)]
 pub enum CompilationError{
-    ParsingError,    
+    LexingError,    
     //LinkerError
 }
 
@@ -16,6 +16,6 @@ macro_rules! unrecoverable_error {
         );
         
         // exit(1);
-        panic!("Paniced here lol");
+        panic!();
     };
 }

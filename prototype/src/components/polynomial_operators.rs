@@ -13,17 +13,10 @@ impl Add for TsPoly{
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        let max_p;
+        let temp_pow = if self.max_pow >= rhs.max_pow { self.max_pow } else { rhs.max_pow };
 
-        if self.max_pow > rhs.max_pow{
-            max_p = self.max_pow;
-        }else{
-            max_p = rhs.max_pow
-        }
-
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
-
-        for i in 0..Self::DEFAULT_MAX_POW{
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: temp_pow};
+        for i in 0..temp_pow {
             temp.coefs[i] = self.coefs[i] + rhs.coefs[i];
         }
 
@@ -33,9 +26,11 @@ impl Add for TsPoly{
 
 impl AddAssign for TsPoly{
     fn add_assign(&mut self, rhs: Self) {
-        for i in 0..Self::DEFAULT_MAX_POW{
+        let temp_pow = if self.max_pow >= rhs.max_pow { self.max_pow } else { rhs.max_pow };
+        for i in 0..=temp_pow {
             self.coefs[i]+=rhs.coefs[i];
         }
+        self.max_pow = temp_pow;
     }
 }
 
@@ -43,18 +38,10 @@ impl Sub for TsPoly{
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        //TODO check integrity of this max_pow code
-        let max_p;
+        let temp_pow = if self.max_pow >= rhs.max_pow { self.max_pow } else { rhs.max_pow };
 
-        if self.max_pow > rhs.max_pow{
-            max_p = self.max_pow;
-        }else{
-            max_p = rhs.max_pow
-        }
-
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
-
-        for i in 0..Self::DEFAULT_MAX_POW{
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: temp_pow};
+        for i in 0..temp_pow{
             temp.coefs[i] = self.coefs[i] - rhs.coefs[i];
         }
 
@@ -64,9 +51,11 @@ impl Sub for TsPoly{
 
 impl SubAssign for TsPoly{
     fn sub_assign(&mut self, rhs: Self) {
-        for i in 0..Self::DEFAULT_MAX_POW{
+        let temp_pow = if self.max_pow >= rhs.max_pow { self.max_pow } else { rhs.max_pow };
+        for i in 0..=temp_pow {
             self.coefs[i]-=rhs.coefs[i];
         }
+        self.max_pow = temp_pow;
     }
 }
 
@@ -75,7 +64,6 @@ impl Mul for TsPoly{
 
     fn mul(self, rhs: Self) -> Self::Output{
         let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow + rhs.max_pow};
-
         for i_lhs in 0..Self::DEFAULT_MAX_POW{
             for i_rhs in 0..Self::DEFAULT_MAX_POW{
                 let end_index = i_lhs + i_rhs;
@@ -103,9 +91,8 @@ impl MulAssign for TsPoly{
             }   
         }
 
-        for i in 0..Self::DEFAULT_MAX_POW{
-            self.coefs[i] = temp.coefs[i];
-        }
+        self.max_pow = self.max_pow + rhs.max_pow;
+        for i in 0..=(self.max_pow + rhs.max_pow) { self.coefs[i] = temp.coefs[i]; }
     }
 }
 

@@ -68,7 +68,7 @@ fn main(){
         let mut module: LLVMModuleRef = ptr::null_mut();
         let mut error: *mut i8 = ptr::null_mut();
         if LLVMParseIRInContext(context, buffer, &mut module, &mut error) != 0 {
-            unrecoverable_error!("LLVM Error | Error occured while parsing the IR string", *error);
+            unrecoverable_error!("LLVM Error | Error occured while lexing and parsing the IR string", *error);
         }
 
         let result = LLVM_InitializeNativeTarget();

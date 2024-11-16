@@ -4,7 +4,7 @@ use crate::components::{
     object_type_definitions::*,
     terminal_decoration::Color
 };
-use crate::stages::function_parse::{parse_function, convert_infix_to_postfix};
+use crate::stages::function_lexing::{lex_function, convert_infix_to_postfix};
 use std::process::exit;
 
 fn compile_postfix(mut elems: Vec<Func>) -> (String,Vec<Func>, i16){
@@ -109,7 +109,7 @@ fn compile_postfix(mut elems: Vec<Func>) -> (String,Vec<Func>, i16){
 }
 
 pub fn generate_ir(function: &String) -> String {
-    let mut function_collection = parse_function(function);
+    let mut function_collection = lex_function(function);
     convert_infix_to_postfix(&mut function_collection);
 
     let (mut func_code,functions_to_define, ret_addr) = compile_postfix(function_collection);

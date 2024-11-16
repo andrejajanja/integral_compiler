@@ -4,7 +4,7 @@ use crate::components::terminal_decoration::Color;
 use crate::unrecoverable_error;
 use std::process::exit;
 
-fn try_parsing(chunk: &str, function: &str) -> Option<Func> {
+fn try_lexing(chunk: &str, function: &str) -> Option<Func> {
     match chunk.len() {
         1 => {
             match &chunk[..]{
@@ -49,19 +49,19 @@ fn try_parsing(chunk: &str, function: &str) -> Option<Func> {
         }
         _ => {
             unrecoverable_error!(
-                "Parsing Error | Highlighted part of a function string is unknown/unsupported function",
+                "Lexing Error | Highlighted part of a function string is unknown/unsupported function",
                 &function.replace(&chunk, &format!("{}{} {} {}{}", Color::CBlack, Color::BYellow,&chunk, Color::CYellow, Color::BBlack))
             );
         }
     }
 }
 
-pub fn parse_function(function: &str) -> Vec<Func> {
+pub fn lex_function(function: &str) -> Vec<Func> {
     let mut tokens: Vec<Func> = Vec::<Func>::new();
 
     let mut i: usize = 0;
     let mut buffer: usize = 1;
-
+    
     while i+buffer<function.len()+1{
         let mut temp = i;
 
@@ -75,13 +75,15 @@ pub fn parse_function(function: &str) -> Vec<Func> {
         }
 
         let temp_node: Option<Func>;
-
         if i == temp{
-            temp_node = try_parsing(&function[i..i+buffer], &function); //FIXME this is where some performance is lost due to elegant error handling
+            temp_node = try_lexing(&function[i..i+buffer], &function); //FIXME this is where some performance is lost due to elegant error handling
         }else {
             buffer-=1;
             let temp_const = function[i..i + buffer].parse::<f64>().unwrap_or_else( |_op| {
-                unrecoverable_error!("Parsing Error | Failed to parse a number in function string", &function[i..i + buffer]);
+                unrecoverable_error!(
+                    "Lexing Error | Failed to parse a number in function string",
+                    &function[i..i + buffer]
+                );
             });
             temp_node = Some(Func::Const(temp_const));
         }
@@ -99,7 +101,7 @@ pub fn parse_function(function: &str) -> Vec<Func> {
     tokens
 }
 
-fn in_op_priority(op: &Func) -> u8{
+fn in_op_priority(op: &Func) -> u8 {
     match op{
         Func::Add | Func::Sub => 2,
         Func::Mul | Func::Div => 4,
@@ -111,7 +113,7 @@ fn in_op_priority(op: &Func) -> u8{
     }
 }
 
-fn st_op_priority(op: &Func) -> u8{
+fn st_op_priority(op: &Func) -> u8 {
     match op{
         Func::Add | Func::Sub => 2,
         Func::Mul | Func::Div => 4,

@@ -1,7 +1,15 @@
 #![allow(dead_code)]
 use crate::{
-    components::{object_type_definitions::Func, polynomials::TsPoly},
-    stages::function_parse::{convert_infix_to_postfix, parse_function}
+    unrecoverable_error,
+    components::{
+        object_type_definitions::Func, 
+        polynomials::TsPoly,
+        terminal_decoration::Color
+    },
+    stages::function_lexing::{
+        convert_infix_to_postfix,
+        lex_function
+    }
 };
 
 use std::f64::consts::PI;
@@ -108,11 +116,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
         Func::Add => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::zero();
-                    temp.max_pow = 1;
-                    temp.coefs[0] = value;
-                    temp.coefs[1] = 1.0;
-                    sequence[*index-2] = Func::Poly(temp);
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![value, 1.0]));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -135,17 +139,13 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
         Func::Sub => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::zero();
-                    temp.max_pow = 1;
-                    temp.coefs[0] = -value;
-                    temp.coefs[1] = 1.0;
-                    sequence[*index-2] = Func::Poly(temp);
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![-value, 1.0]));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
                 }
                 Func::Const(value_two) => {
-                    sequence[*index-2] = Func::Const(value-*value_two);
+                    sequence[*index-2] = Func::Const(*value_two-value);
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -162,10 +162,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
         Func::Mul => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::zero();
-                    temp.max_pow = 1;
-                    temp.coefs[1] = value;
-                    sequence[*index-2] = Func::Poly(temp);
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, value]));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -188,21 +185,39 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
         Func::Div => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::zero();
-                    temp.max_pow = 1;
-                    temp.coefs[1] = 1.0/value;
-                    sequence[*index-2] = Func::Poly(temp);
+                    if value == 0.0 {
+                        //TODO make this sequence print prittier
+                        unrecoverable_error!(
+                            "Taylor optimization | Devision by 0 error while deviding X with const, sequence state",
+                            format!("{:?}", sequence)
+                        );
+                    }
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, 1.0/value]));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
                 }
                 Func::Const(value_two) => {
-                    sequence[*index-2] = Func::Const(value / *value_two);
+                    if value == 0.0 {
+                        //TODO make this sequence print prittier
+                        unrecoverable_error!(
+                            "Taylor optimization | Devision by 0 error during static const eval, sequence state",
+                            format!("{:?}", sequence)
+                        );
+                    }
+                    sequence[*index-2] = Func::Const(*value_two/value);
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
                 }
                 Func::Poly(poly) => {
+                    if value == 0.0 {
+                        //TODO make this sequence print prittier
+                        unrecoverable_error!(
+                            "Taylor optimization error | Devision by 0 error while deviding polynomial with const, sequence state",
+                            format!("{:?}", sequence)
+                        );
+                    }
                     *poly *= 1.0/value;
                     sequence.remove(*index);
                     sequence.remove(*index-1);
@@ -215,10 +230,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
             match &mut sequence[*index-2] {
                 Func::X => {
                     if value == 0.0 {
-                        let mut temp = TsPoly::zero();
-                        temp.max_pow = 1;
-                        temp.coefs[0] = 1.0;
-                        sequence[*index-2] = Func::Poly(temp);
+                        sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![1.0]));
                         sequence.remove(*index);
                         sequence.remove(*index-1);
                         *index-=2;
@@ -294,20 +306,13 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
         Func::Add => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::zero();
-                    temp.max_pow = 1;
-                    temp.coefs[1] = 2.0;
-                    sequence[*index-2] = Func::Poly(temp);
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, 2.0]));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    let mut temp = TsPoly::zero();
-                    temp.max_pow = 1;
-                    temp.coefs[0] = *value;
-                    temp.coefs[1] = 1.0;
-                    sequence[*index-2] = Func::Poly(temp);
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![*value, 1.0]));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -317,6 +322,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
                     if poly.max_pow == 0 {
                         poly.max_pow = 1;
                     }
+                    poly.truncate(poly_degre);
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -332,11 +338,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    let mut temp = TsPoly::zero();
-                    temp.max_pow = 1;
-                    temp.coefs[0] = *value;
-                    temp.coefs[1] = -1.0;
-                    sequence[*index-2] = Func::Poly(temp);
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![*value, -1.0]));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -346,6 +348,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
                     if poly.max_pow == 1 && poly.coefs[1] == 0.0{
                         poly.max_pow = 0;
                     }
+                    poly.truncate(poly_degre);
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -356,28 +359,20 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
         Func::Mul => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::zero();
-                    temp.max_pow = 2;
-                    temp.coefs[2] = 1.0;
-                    sequence[*index-2] = Func::Poly(temp);
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, 0.0, 1.0]));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    let mut temp = TsPoly::zero();
-                    temp.max_pow = 1;
-                    temp.coefs[1] = *value;
-                    sequence[*index-2] = Func::Poly(temp);
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, *value]));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
                 }
                 Func::Poly(poly) => {
-                    let mut temp = TsPoly::zero();
-                    temp.max_pow = 1;
-                    temp.coefs[1] = 1.0;
-                    *poly*=temp;
+                    *poly *= TsPoly::from_vec(vec![0.0, 1.0]);
+                    poly.truncate(poly_degre);
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -465,6 +460,7 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
                     if poly.coefs[1] != 0.0 && poly.max_pow == 0 {
                         poly.max_pow = 1;
                     }
+                    poly.truncate(poly_degre);
                     sequence[*index-2] = Func::Poly(poly.clone());
                     sequence.remove(*index);
                     sequence.remove(*index-1);
@@ -479,6 +475,7 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
                 }
                 Func::Poly(poly_two) => {
                     *poly+=poly_two.clone();
+                    poly.truncate(poly_degre);
                     sequence[*index-2] = Func::Poly(poly.clone());
                     sequence.remove(*index);
                     sequence.remove(*index-1);
@@ -490,24 +487,23 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
         Func::Sub => {
             match &sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::zero();
-                    temp.coefs[1] -= 1.0;
-                    temp.max_pow = 1;
-                    sequence[*index-2] = Func::Poly(temp-poly.clone());
+                    let mut temp = TsPoly::from_vec(vec![0.0, 1.0])-poly.clone();
+                    temp.truncate(poly_degre);
+                    sequence[*index-2] = Func::Poly(temp);
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    let mut temp = TsPoly::zero();
-                    temp.coefs[0] = *value;
-                    sequence[*index-2] = Func::Poly(temp-poly.clone());
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![*value])-poly.clone());
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
                 }
                 Func::Poly(poly_two) => {
-                    sequence[*index-2] = Func::Poly(poly_two.clone()-poly.clone());
+                    let mut temp = poly_two.clone()-poly.clone();
+                    temp.truncate(poly_degre);
+                    sequence[*index-2] = Func::Poly(temp);
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -518,10 +514,9 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
         Func::Mul => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    let mut temp = TsPoly::zero();
-                    temp.max_pow = 1;
-                    temp.coefs[1] = 1.0;
-                    sequence[*index-2] = Func::Poly(temp*poly.clone());
+                    let mut temp = TsPoly::from_vec(vec![0.0, 1.0])*poly.clone();
+                    temp.truncate(poly_degre);
+                    sequence[*index-2] = Func::Poly(temp);
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -533,7 +528,9 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
                     *index-=2;
                 }
                 Func::Poly(poly_two) => {
-                    sequence[*index-2] = Func::Poly(poly_two.clone()*poly.clone());
+                    let mut temp = poly_two.clone()*poly.clone();
+                    temp.truncate(poly_degre);
+                    sequence[*index-2] = Func::Poly(temp);
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -565,7 +562,7 @@ pub fn optimize_postfix_using_tylor(sequence: &mut Vec<Func>, precision_center: 
 }
 
 pub fn generate_taylor_ir(function: &String, _precision_center: f64, _poly_degre: usize) -> String {
-    let mut sequence = parse_function(function);
+    let mut sequence = lex_function(function);
     convert_infix_to_postfix(&mut sequence);
     // optimize_postfix_using_tylor(&mut sequence, precision_center, poly_degre);
     let mut temp_str = String::new();
