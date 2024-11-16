@@ -16,7 +16,7 @@ impl Add for TsPoly{
         let temp_pow = if self.max_pow >= rhs.max_pow { self.max_pow } else { rhs.max_pow };
 
         let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: temp_pow};
-        for i in 0..temp_pow {
+        for i in 0..=temp_pow {
             temp.coefs[i] = self.coefs[i] + rhs.coefs[i];
         }
 
@@ -41,7 +41,7 @@ impl Sub for TsPoly{
         let temp_pow = if self.max_pow >= rhs.max_pow { self.max_pow } else { rhs.max_pow };
 
         let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: temp_pow};
-        for i in 0..temp_pow{
+        for i in 0..=temp_pow{
             temp.coefs[i] = self.coefs[i] - rhs.coefs[i];
         }
 
@@ -96,13 +96,12 @@ impl MulAssign for TsPoly{
     }
 }
 
-
 //Next three operator overloads implement multiplying all coefs of a polynomial with a real number
 impl Mul<f64> for TsPoly {
     type Output = TsPoly;
 
     fn mul(mut self, rhs: f64) -> TsPoly {
-        for i in 0..Self::DEFAULT_MAX_POW{
+        for i in 0..=self.max_pow{
             self.coefs[i] *= rhs;
         }
 
@@ -114,7 +113,7 @@ impl Mul<TsPoly> for f64 {
     type Output = TsPoly;
 
     fn mul(self, mut rhs: TsPoly) -> TsPoly {
-        for i in 0..TsPoly::DEFAULT_MAX_POW{
+        for i in 0..=rhs.max_pow{
             rhs.coefs[i] *= self;
         }
         rhs
@@ -123,7 +122,7 @@ impl Mul<TsPoly> for f64 {
 
 impl MulAssign<f64> for TsPoly{
     fn mul_assign(&mut self, rhs: f64) {
-        for i in 0..Self::DEFAULT_MAX_POW{
+        for i in 0..=self.max_pow{
             self.coefs[i] *= rhs;
         }
     }
