@@ -91,8 +91,13 @@ impl MulAssign for TsPoly{
             }   
         }
 
-        self.max_pow = self.max_pow + rhs.max_pow;
-        for i in 0..=(self.max_pow + rhs.max_pow) { self.coefs[i] = temp.coefs[i]; }
+        let mut temp_pow = self.max_pow + rhs.max_pow;
+        if temp_pow >= Self::DEFAULT_MAX_POW {
+            temp_pow = Self::DEFAULT_MAX_POW - 1;
+        }
+
+        self.max_pow = temp_pow;
+        for i in 0..=self.max_pow { self.coefs[i] = temp.coefs[i]; }
     }
 }
 
@@ -205,7 +210,7 @@ impl fmt::Display for TsPoly{
             }
 
             if self.coefs[index] != 1.0 {
-                temp_str += &self.coefs[index].to_string();
+                temp_str += format!("{:.1}", &self.coefs[index]).as_str();
             }
             match index {
                 0 => {
@@ -232,9 +237,7 @@ impl fmt::Display for TsPoly{
             started = true;
         }
 
-        if !started {
-            temp_str += "0";
-        }
+        if !started {temp_str += "0";}
 
         write!(f, "{}", temp_str)
     }

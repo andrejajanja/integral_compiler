@@ -124,7 +124,7 @@ impl fmt::Display for Func {
             Func::Arcosh => String::from("arcosh"),
             Func::Artgh => String::from("artgh"),
             Func::Arctgh => String::from("arctgh"),
-            Func::Poly(_ts_poly) => String::from("Poly"),
+            Func::Poly(ts_poly) => String::from(ts_poly.to_string()),
         };
 
         write!(f, "{}", temp)

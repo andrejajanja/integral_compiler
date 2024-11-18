@@ -1,6 +1,10 @@
 #![allow(dead_code)]
 use std::fs::read_to_string;
 use serde::Deserialize;
+use crate::{
+    unrecoverable_error,
+    components::terminal_decoration::Color
+};
 
 pub fn print_help() {
     println!("
@@ -40,9 +44,30 @@ pub struct IntegralConfig{
     pub samples: u64
 }
 
-
 pub fn parse_input_file(file_path: &str) -> IntegralConfig {
     let config_content = read_to_string(file_path).expect("Failed to read config file");
     let config: Config = toml::from_str(&config_content).expect("Failed to parse contents of config file");
     return config.integral_config;
+}
+
+pub fn safely_pop_from_stacks(op_st: &mut Vec<i16>, cnst_st: &mut Vec<String>, one_two: bool) -> String{
+    if let Some(x) = op_st.pop() {
+        match &x {
+            -1 => {
+                if let Some(cnst) = cnst_st.pop() {
+                    cnst
+                }else{
+                    unrecoverable_error!("Frontend error | During compiling of postfix form", "No constant on the const_stack, even though at least one was expected to be.");
+                }
+            },
+            0 => String::from("%x"),
+            _ => String::from("%") + &x.to_string(),
+        }
+    }else{
+        if one_two {
+            unrecoverable_error!("Frontend error | During compiling of postfix form", "No operands on the stack, even though at least one was expected to be.");
+        }else{
+            unrecoverable_error!("Frontend error | During compiling of postfix form", "No operands on the stack, even though at least two was expected to be.");
+        }
+    }
 }

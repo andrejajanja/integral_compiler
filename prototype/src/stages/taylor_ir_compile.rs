@@ -5,7 +5,8 @@ use crate::{
         object_type_definitions::Func, 
         polynomials::TsPoly,
         terminal_decoration::Color,
-        taylor_optimizer::optimize_postfix_using_taylor
+        taylor_optimizer::optimize_postfix_using_taylor,
+        auxilary_functions::safely_pop_from_stacks
     },
     stages::function_lexing::{
         convert_infix_to_postfix,
@@ -14,6 +15,7 @@ use crate::{
 };
 
 pub fn generate_ir_from_taylor_sequence(sequence: &mut Vec<Func>) -> (String, usize) {
+    let _generated_poly: bool = false;
     (format!("{:?}", sequence), 1)
 }
 
@@ -21,13 +23,18 @@ pub fn generate_taylor_ir(function: &String, precision_center: f64, poly_degre: 
     let mut sequence = lex_function(function);
     convert_infix_to_postfix(&mut sequence);
     optimize_postfix_using_taylor(&mut sequence, precision_center, poly_degre);
+
+    if let Func::Poly(poly) = &sequence[0] {
+        println!("{}", poly.generate_ir(5));
+    }
+
     let (func_code, ret_addr) = generate_ir_from_taylor_sequence(&mut sequence);
     
     format!("\ndefine double @fja(double %x){{\n{}\tret double %{}\n}}", func_code, ret_addr+1)
 }
 
 // let mut temp_str = String::new();
-// for elem in sequence {
+// for elem in &sequence {
 //     temp_str += &elem.to_string();
 //     temp_str += ",";
 // }

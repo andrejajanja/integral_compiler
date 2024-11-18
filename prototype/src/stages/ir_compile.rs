@@ -2,46 +2,13 @@
 use crate::unrecoverable_error;
 use crate::components::{
     object_type_definitions::*,
-    terminal_decoration::Color
+    terminal_decoration::Color,
+    auxilary_functions::safely_pop_from_stacks
 };
 use crate::stages::function_lexing::{lex_function, convert_infix_to_postfix};
 use std::process::exit;
 
-fn compile_postfix(mut elems: Vec<Func>) -> (String,Vec<Func>, i16){
-    fn safely_pop_from_stacks(op_st: &mut Vec<i16>, cnst_st: &mut Vec<String>, one_two: bool) -> String{
-        match op_st.pop() {
-            Some(x) => {
-                let temp: String;
-                match &x {
-                    -1 => {
-                        match cnst_st.pop() {
-                            Some(cnst) => {
-                                temp = cnst.clone();
-                            },
-                            None => {
-                                unrecoverable_error!("Frontend error | During compiling of postfix form", "No constant on the const_stack, even though at least one was expected to be.");
-                            }
-                        }
-                    },
-                    0 => {
-                        temp = "%x".to_owned();
-                    },
-                    _ => {
-                        temp = "%".to_owned() + &x.to_string();
-                    }
-                }
-                temp
-            },
-            None => {
-                if one_two {
-                    unrecoverable_error!("Frontend error | During compiling of postfix form", "No operands on the stack, even though at least one was expected to be.");
-                }else{
-                    unrecoverable_error!("Frontend error | During compiling of postfix form", "No operands on the stack, even though at least two was expected to be.");
-                }
-            }
-        }
-    }
-
+fn generate_ir_from_postfix(mut elems: Vec<Func>) -> (String,Vec<Func>, i16){
     let mut unique_funcs: Vec<Func> = Vec::<Func>::new();
     let mut code = String::from("");
 
@@ -76,7 +43,6 @@ fn compile_postfix(mut elems: Vec<Func>) -> (String,Vec<Func>, i16){
                 }
                 operand_stack.push(address);
             },
-
             //defining the LLVM IR code output for BINARY ops:
             Func::Add | Func::Sub | Func::Mul | Func::Div | Func::Pow => {
                 let first_oper: String = safely_pop_from_stacks(&mut operand_stack, &mut const_stack, false);
@@ -89,9 +55,7 @@ fn compile_postfix(mut elems: Vec<Func>) -> (String,Vec<Func>, i16){
             },
 
             //X and Const implementations:
-            Func::X => {
-                operand_stack.push(0)
-            },
+            Func::X => operand_stack.push(0),
             Func::Const(value) => {
                 const_stack.push(format!("{:.6e}", value));
                 operand_stack.push(-1);     
@@ -102,7 +66,7 @@ fn compile_postfix(mut elems: Vec<Func>) -> (String,Vec<Func>, i16){
                     format!("Failed to compile function due unsupported node type '{}', in postfix form.", temp.to_string())
                 );
             }
-        }    
+        }
     }
 
     (code, unique_funcs, address-1)
@@ -112,7 +76,7 @@ pub fn generate_ir(function: &String) -> String {
     let mut function_collection = lex_function(function);
     convert_infix_to_postfix(&mut function_collection);
 
-    let (mut func_code,functions_to_define, ret_addr) = compile_postfix(function_collection);
+    let (mut func_code,functions_to_define, ret_addr) = generate_ir_from_postfix(function_collection);
     let mut code = String::from("");
 
     for elem in functions_to_define {

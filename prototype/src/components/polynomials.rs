@@ -17,7 +17,7 @@ pub struct TsPoly {
 
 impl TsPoly{
     /// Highest default available power of the polynomial. Last element of coefs vector is coefitient next to x^(DEFAULT_MAX_POW-1).
-    pub(crate) const DEFAULT_MAX_POW: usize = 10;
+    pub(crate) const DEFAULT_MAX_POW: usize = 30;
 
     pub fn zero() -> Self{
         Self { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: 0}
@@ -100,5 +100,17 @@ impl TsPoly{
     /// Returns the coefitient next to the highest power of x of the polynomial.
     pub(crate) fn lead(&self) -> f64{
         self.coefs[self.max_pow]
+    }
+
+    pub fn generate_ir(&self, mut _start_addr: i16) -> String{
+        let temp = format!(
+r"%x_val = alloca double
+%x_val = load double, double* %x
+%sum = alloca double
+store double {:0.6e}, double* %sum
+", self.coefs[0]
+        );
+
+        temp
     }
 }

@@ -184,7 +184,7 @@ fn eval_10(){
 }
 
 #[test]
-//#[should_panic] //Panic for invalid function domain
+#[should_panic] //Panic for invalid function domain
 fn eval_11(){
     let function = String::from("8-acos(2)/ln(10)");
     let mut sequence = lex_function(&function);
