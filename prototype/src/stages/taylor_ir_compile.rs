@@ -14,7 +14,7 @@ use crate::{
     }
 };
 
-pub fn generate_ir_from_taylor_sequence(sequence: &mut Vec<Func>) -> (String, usize) {
+pub fn generate_ir_from_taylor_sequence(sequence: &mut Vec<Func>) -> (String, i16) {
     let _generated_poly: bool = false;
     (format!("{:?}", sequence), 1)
 }
@@ -24,8 +24,12 @@ pub fn generate_taylor_ir(function: &String, precision_center: f64, poly_degre: 
     convert_infix_to_postfix(&mut sequence);
     optimize_postfix_using_taylor(&mut sequence, precision_center, poly_degre);
 
+    let mut start_addr: u16 = 0;
+
     if let Func::Poly(poly) = &sequence[0] {
-        println!("{}", poly.generate_ir(5));
+        println!("{}", poly);
+        let (temp1, temp2) = poly.generate_ir(&mut start_addr);
+        println!("{}\n{}", temp1, temp2);
     }
 
     let (func_code, ret_addr) = generate_ir_from_taylor_sequence(&mut sequence);

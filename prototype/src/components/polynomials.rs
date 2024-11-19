@@ -102,15 +102,58 @@ impl TsPoly{
         self.coefs[self.max_pow]
     }
 
-    pub fn generate_ir(&self, mut _start_addr: i16) -> String{
-        let temp = format!(
-r"%x_val = alloca double
-%x_val = load double, double* %x
-%sum = alloca double
-store double {:0.6e}, double* %sum
-", self.coefs[0]
+    //TODO this is very rough implementation, make this generate less code, and more efficiently, it's almost there
+    pub fn generate_ir(&self, start_addr: &mut u16) -> (String, String){
+        let mut temp = format!(
+r"%s0_{} = fadd double 0.0, {:.15e}
+%tpow0_{} = fadd double 0.0e0, %x
+%tmul0_{} = fmul double {:.15e}, %tpow0_{}
+%s1_{} = fadd double %tmul0_{}, %s0_{}
+",
+start_addr, self.coefs[0],
+start_addr,
+start_addr, self.coefs[1], start_addr,
+start_addr, start_addr, start_addr,
         );
 
-        temp
+        for i in 1..=self.max_pow-1 {
+            temp += format!(
+r"%tpow{}_{} = fmul double %tpow{}_{}, %x
+%tmul{}_{} = fmul double {:.15e}, %tpow{}_{}
+%s{}_{} = fadd double %tmul{}_{}, %s{}_{}
+",
+i, start_addr, i-1, start_addr,
+i, start_addr, self.coefs[i+1], i, start_addr,
+i+1, start_addr, i, start_addr, i, start_addr,
+).as_str();
+        }
+        let virtual_register = format!("%s{}_{}", self.max_pow, start_addr);
+        *start_addr+=1;
+        (temp, virtual_register)
+    }
+
+    pub fn generate_ir_from_existing_powers(&self, start_addr: &mut u16, existing_pow_start_addr: u16) -> (String, String){
+        let mut temp = format!(
+r"%s0_{} = fadd double 0.0, {:.15e}
+%tmul0_{} = fmul double {:.15e}, %tpow0_{}
+%s1_{} = fadd double %tmul0_{}, %s0_{}
+",
+start_addr, self.coefs[0],
+start_addr, self.coefs[1], existing_pow_start_addr,
+start_addr, start_addr, start_addr,
+        );
+
+        for i in 1..=self.max_pow-1 {
+            temp += format!(
+r"%tmul{}_{} = fmul double {:.15e}, %tpow{}_{}
+%s{}_{} = fadd double %tmul{}_{}, %s{}_{}
+",
+i, start_addr, self.coefs[i+1], i, existing_pow_start_addr,
+i+1, start_addr, i, start_addr, i, start_addr,
+).as_str();
+        }
+        let virtual_register = format!("%s{}_{}", self.max_pow, start_addr);
+        *start_addr+=1;
+        (temp, virtual_register)
     }
 }
