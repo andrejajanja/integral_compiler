@@ -10,7 +10,7 @@ extern "C" {
 }
 
 fn main(){
-    let _temp = generate_taylor_ir(&String::from("cos(x+1)*e^x+sin(x)*ln(x)"), 1.0, 6);
+    let _temp = generate_taylor_ir(&String::from("sin(x)"), 1.0, 4);
     //println!("{}", );
     // let mut sequence = lex_function(&String::from("8-cos(6)/sin(0)"));
     // convert_infix_to_postfix(&mut sequence);

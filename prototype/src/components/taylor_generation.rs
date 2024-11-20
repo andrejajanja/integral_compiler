@@ -7,8 +7,8 @@ use std::f64::consts::PI;
 
 
 impl TsPoly {
-    pub fn generate_sin(mut offset: f64, max_p: usize) -> TsPoly{
-        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
+    pub fn generate_sin(mut offset: f64, max_p: usize, from_x: bool) -> TsPoly{
+        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p, from_x: from_x};
         let multiple = f64::floor(offset/(2.0*PI));
         offset-=multiple*2.0*PI;
 
@@ -34,8 +34,8 @@ impl TsPoly {
         temp
     }
 
-    pub fn generate_cos(mut offset: f64, max_p: usize) -> TsPoly{
-        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
+    pub fn generate_cos(mut offset: f64, max_p: usize, from_x: bool) -> TsPoly{
+        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p, from_x: from_x};
         let multiple = f64::floor(offset/(2.0*PI));
         offset-=multiple*2.0*PI;
 
@@ -61,12 +61,12 @@ impl TsPoly {
         temp
     }
 
-    pub fn generate_tg_parts(mut offset: f64, max_p: usize) -> (TsPoly, TsPoly){
+    pub fn generate_tg_parts(mut offset: f64, max_p: usize, from_x: bool) -> (TsPoly, TsPoly){
         let multiple = f64::floor(offset/PI);
         offset-=multiple*PI;
 
-        let mut sin_poly = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
-        let mut cos_poly = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
+        let mut sin_poly = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p, from_x: from_x};
+        let mut cos_poly = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p, from_x: from_x};
 
         let mut fact: f64 = 1.0;
         sin_poly.coefs[0] = f64::sin(offset);
@@ -103,8 +103,8 @@ impl TsPoly {
         (sin_poly, cos_poly)
     }
 
-    pub fn generate_exp(offset: f64, max_p: usize) -> TsPoly{
-        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
+    pub fn generate_exp(offset: f64, max_p: usize, from_x: bool) -> TsPoly{
+        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p, from_x: from_x};
         let mut fact: f64 = 1.0;
         temp.coefs[0] = f64::exp(offset);
         for i in 1..=max_p{
@@ -115,14 +115,14 @@ impl TsPoly {
         temp
     }
 
-    pub fn generate_ln(offset: f64, max_p: usize) -> TsPoly{
+    pub fn generate_ln(offset: f64, max_p: usize, from_x: bool) -> TsPoly{
         if offset < 0.25 {
             unrecoverable_error!(
                 "Frontend error | Can't generate Taylor's polynomial for provided offset value",
                 format!("{}  < 0.25", offset)
             );
         }
-        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
+        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p, from_x: from_x};
         temp.coefs[0] = f64::ln(offset);
         if max_p == 0 {return temp};
 
@@ -145,8 +145,8 @@ impl TsPoly {
         temp
     }
 
-    pub fn generate_sinh(offset: f64, max_p: usize) -> TsPoly{
-        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
+    pub fn generate_sinh(offset: f64, max_p: usize, from_x: bool) -> TsPoly{
+        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p, from_x: from_x};
         let exp2x = f64::exp(2.0*offset);
         let sinh_off = (exp2x - 1.0)/exp2x;
         let cosh_off = (exp2x + 1.0)/exp2x;
@@ -167,8 +167,8 @@ impl TsPoly {
         temp
     }
 
-    pub fn generate_cosh(offset: f64, max_p: usize) -> TsPoly{
-        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p};
+    pub fn generate_cosh(offset: f64, max_p: usize, from_x: bool) -> TsPoly{
+        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: max_p, from_x: from_x};
         let exp2x = f64::exp(2.0*offset);
         let sinh_off = (exp2x - 1.0)/exp2x;
         let cosh_off = (exp2x + 1.0)/exp2x;

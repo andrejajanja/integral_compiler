@@ -138,7 +138,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
         Func::Add => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![value, 1.0]));
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![value, 1.0], true));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -161,7 +161,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
         Func::Sub => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![-value, 1.0]));
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![-value, 1.0], true));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -184,7 +184,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
         Func::Mul => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, value]));
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, value], true));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -214,7 +214,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
                             format!("{:?}", sequence)
                         );
                     }
-                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, 1.0/value]));
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, 1.0/value], true));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -252,7 +252,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
             match &mut sequence[*index-2] {
                 Func::X => {
                     if value == 0.0 {
-                        sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![1.0]));
+                        sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![1.0], true));
                         sequence.remove(*index);
                         sequence.remove(*index-1);
                         *index-=2;
@@ -285,24 +285,24 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
 fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, precision_center: f64, poly_degree: usize) {
     match operation {
         Func::Sin => {
-            sequence[*index-1] = Func::Poly(TsPoly::generate_sin(precision_center, poly_degree));
+            sequence[*index-1] = Func::Poly(TsPoly::generate_sin(precision_center, poly_degree, true));
             sequence.remove(*index);
             *index-=1;
         }
         Func::Cos => {
-            sequence[*index-1] = Func::Poly(TsPoly::generate_cos(precision_center, poly_degree));
+            sequence[*index-1] = Func::Poly(TsPoly::generate_cos(precision_center, poly_degree, true));
             sequence.remove(*index);
             *index-=1;
         }
         Func::Tg => todo!("Need to impelment taylor generation for tg"),
         Func::Ctg => todo!("Need to impelment taylor generation for ctg"),
         Func::Sinh => {
-            sequence[*index-1] = Func::Poly(TsPoly::generate_sinh(precision_center, poly_degree));
+            sequence[*index-1] = Func::Poly(TsPoly::generate_sinh(precision_center, poly_degree, true));
             sequence.remove(*index);
             *index-=1;
         }
         Func::Cosh => {
-            sequence[*index-1] = Func::Poly(TsPoly::generate_cosh(precision_center, poly_degree));
+            sequence[*index-1] = Func::Poly(TsPoly::generate_cosh(precision_center, poly_degree, true));
             sequence.remove(*index);
             *index-=1;
         }
@@ -317,25 +317,25 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
         Func::Artgh => todo!("Need to impelment taylor generation for actg"),
         Func::Arctgh => todo!("Need to impelment taylor generation for actgh"),
         Func::Ln => {
-            sequence[*index-1] = Func::Poly(TsPoly::generate_ln(precision_center, poly_degree));
+            sequence[*index-1] = Func::Poly(TsPoly::generate_ln(precision_center, poly_degree, true));
             sequence.remove(*index);
             *index-=1;
         }
         Func::Exp => {
-            sequence[*index-1] = Func::Poly(TsPoly::generate_exp(precision_center, poly_degree));
+            sequence[*index-1] = Func::Poly(TsPoly::generate_exp(precision_center, poly_degree, true));
             sequence.remove(*index);
             *index-=1;
         }
         Func::Add => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, 2.0]));
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, 2.0], true));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![*value, 1.0]));
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![*value, 1.0], true));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -362,7 +362,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![*value, -1.0]));
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![*value, -1.0], true));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -383,13 +383,13 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
         Func::Mul => {
             match &mut sequence[*index-2] {
                 Func::X => {
-                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, 0.0, 1.0]));
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, 0.0, 1.0], true));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, *value]));
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, *value], true));
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;

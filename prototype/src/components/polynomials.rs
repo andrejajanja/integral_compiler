@@ -12,7 +12,8 @@ use std::process::exit;
 #[derive(Debug, Clone, PartialEq)]
 pub struct TsPoly {
     pub(crate) coefs: Vec<f64>,
-    pub(crate) max_pow: usize
+    pub(crate) max_pow: usize,
+    pub(crate) from_x: bool
 }
 
 impl TsPoly{
@@ -20,10 +21,10 @@ impl TsPoly{
     pub(crate) const DEFAULT_MAX_POW: usize = 30;
 
     pub fn zero() -> Self{
-        Self { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: 0}
+        Self { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: 0, from_x: true}
     }
 
-    pub fn from_vec(mut provided_coefs: Vec<f64>) -> Self{
+    pub fn from_vec(mut provided_coefs: Vec<f64>, from_x: bool) -> Self{
         provided_coefs.resize(Self::DEFAULT_MAX_POW, 0.0);
         let mut temp_pow: usize = 0;
         for i in 0..Self::DEFAULT_MAX_POW {
@@ -31,7 +32,7 @@ impl TsPoly{
                 temp_pow = i;
             }
         }
-        Self { coefs: provided_coefs, max_pow: temp_pow}
+        Self { coefs: provided_coefs, max_pow: temp_pow, from_x: from_x}
     }
 
     pub fn put_offset(&mut self, mut offset: f64){
@@ -49,7 +50,7 @@ impl TsPoly{
     }
 
     pub fn from_const(constant: f64) -> Self {
-        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: 0};
+        let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: 0, from_x: true};
         temp.coefs[0] = constant;
         temp
     }
@@ -102,37 +103,38 @@ impl TsPoly{
         self.coefs[self.max_pow]
     }
 
-    //TODO this is very rough implementation, make this generate less code, and more efficiently, it's almost there
-    pub fn generate_ir(&self, start_addr: &mut u16) -> (String, String){
+    pub fn generate_ir(&self, poly_argument: Option<String>, start_addr: u16) -> (String, String){
+        let mut x: String = String::from("%x");
+        if let Some(temp_argument) = poly_argument { x = temp_argument;}
+
         let mut temp = format!(
-r"%s0_{} = fadd double 0.0, {:.15e}
-%tpow0_{} = fadd double 0.0e0, %x
-%tmul0_{} = fmul double {:.15e}, %tpow0_{}
-%s1_{} = fadd double %tmul0_{}, %s0_{}
+r"  %p0_{} = fadd double 0.0, {:.15e}
+    %tpow0_{} = {}
+    %tmul0_{} = fmul double {:.15e}, {}
+    %p1_{} = fadd double %tmul0_{}, %p0_{}
 ",
 start_addr, self.coefs[0],
-start_addr,
-start_addr, self.coefs[1], start_addr,
+start_addr, x,
+start_addr, self.coefs[1], x,
 start_addr, start_addr, start_addr,
         );
 
         for i in 1..=self.max_pow-1 {
             temp += format!(
-r"%tpow{}_{} = fmul double %tpow{}_{}, %x
-%tmul{}_{} = fmul double {:.15e}, %tpow{}_{}
-%s{}_{} = fadd double %tmul{}_{}, %s{}_{}
+r"  %tpow{}_{} = fmul double %tpow{}_{}, {}
+    %tmul{}_{} = fmul double {:.15e}, %tpow{}_{}
+    %p{}_{} = fadd double %tmul{}_{}, %p{}_{}
 ",
-i, start_addr, i-1, start_addr,
+i, start_addr, i-1, start_addr, x,
 i, start_addr, self.coefs[i+1], i, start_addr,
 i+1, start_addr, i, start_addr, i, start_addr,
 ).as_str();
         }
-        let virtual_register = format!("%s{}_{}", self.max_pow, start_addr);
-        *start_addr+=1;
+        let virtual_register = format!("%p{}_{}", self.max_pow, start_addr);
         (temp, virtual_register)
     }
 
-    pub fn generate_ir_from_existing_powers(&self, start_addr: &mut u16, existing_pow_start_addr: u16) -> (String, String){
+    pub fn generate_ir_from_existing_powers(&self, start_addr: u16, existing_pow_start_addr: u16) -> (String, String){
         let mut temp = format!(
 r"%s0_{} = fadd double 0.0, {:.15e}
 %tmul0_{} = fmul double {:.15e}, %tpow0_{}
@@ -143,7 +145,7 @@ start_addr, self.coefs[1], existing_pow_start_addr,
 start_addr, start_addr, start_addr,
         );
 
-        for i in 1..=self.max_pow-1 {
+        for i in 1..self.max_pow {
             temp += format!(
 r"%tmul{}_{} = fmul double {:.15e}, %tpow{}_{}
 %s{}_{} = fadd double %tmul{}_{}, %s{}_{}
@@ -153,7 +155,7 @@ i+1, start_addr, i, start_addr, i, start_addr,
 ).as_str();
         }
         let virtual_register = format!("%s{}_{}", self.max_pow, start_addr);
-        *start_addr+=1;
         (temp, virtual_register)
     }
+
 }

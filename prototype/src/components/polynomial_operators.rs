@@ -15,7 +15,7 @@ impl Add for TsPoly{
     fn add(self, rhs: Self) -> Self::Output {
         let temp_pow = if self.max_pow >= rhs.max_pow { self.max_pow } else { rhs.max_pow };
 
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: temp_pow};
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: temp_pow, from_x: true};
         for i in 0..=temp_pow {
             temp.coefs[i] = self.coefs[i] + rhs.coefs[i];
         }
@@ -40,7 +40,7 @@ impl Sub for TsPoly{
     fn sub(self, rhs: Self) -> Self::Output {
         let temp_pow = if self.max_pow >= rhs.max_pow { self.max_pow } else { rhs.max_pow };
 
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: temp_pow};
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: temp_pow, from_x: true};
         for i in 0..=temp_pow{
             temp.coefs[i] = self.coefs[i] - rhs.coefs[i];
         }
@@ -63,7 +63,7 @@ impl Mul for TsPoly{
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output{
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow + rhs.max_pow};
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow + rhs.max_pow, from_x: true};
         for i_lhs in 0..Self::DEFAULT_MAX_POW{
             for i_rhs in 0..Self::DEFAULT_MAX_POW{
                 let end_index = i_lhs + i_rhs;
@@ -80,7 +80,7 @@ impl Mul for TsPoly{
 
 impl MulAssign for TsPoly{
     fn mul_assign(&mut self, rhs: Self) {
-        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow + rhs.max_pow};
+        let mut temp = TsPoly{coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow + rhs.max_pow, from_x: true};
         for i_lhs in 0..Self::DEFAULT_MAX_POW{
             for i_rhs in 0..Self::DEFAULT_MAX_POW{
                 let end_index = i_lhs + i_rhs;
@@ -154,11 +154,11 @@ impl Div for TsPoly{
             );
         }
         
-        let mut quotient = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow-rhs.max_pow};
+        let mut quotient = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow-rhs.max_pow, from_x: true};
         let mut remainder = self.clone();
 
         while remainder.coefs[0] != 0.0 && remainder.max_pow != 0 && remainder.max_pow >= rhs.max_pow {
-            let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: remainder.max_pow-rhs.max_pow};
+            let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: remainder.max_pow-rhs.max_pow, from_x: true};
             temp.coefs[remainder.max_pow-rhs.max_pow] = remainder.lead()/rhs.lead();
             quotient+=temp.clone();
             remainder-=temp*rhs.clone();
@@ -178,10 +178,10 @@ impl DivAssign for TsPoly{
             );
         }
         
-        let mut quotient = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow-rhs.max_pow};
+        let mut quotient = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow-rhs.max_pow, from_x: true};
 
         while self.coefs[0] != 0.0 && self.max_pow != 0 && self.max_pow >= rhs.max_pow {
-            let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow-rhs.max_pow};
+            let mut temp = TsPoly { coefs: vec![0.0; Self::DEFAULT_MAX_POW], max_pow: self.max_pow-rhs.max_pow, from_x: true};
             temp.coefs[self.max_pow-rhs.max_pow] = self.lead()/rhs.lead();
             quotient+=temp.clone();
             *self-=temp*rhs.clone();
