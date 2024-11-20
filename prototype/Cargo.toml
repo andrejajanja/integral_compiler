@@ -11,9 +11,6 @@ libc = "0.2"
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8.19"
 
-[dev-dependencies]
-criterion = "0.4"
-
 [[bench]]
 name = "performance"
 harness = false
