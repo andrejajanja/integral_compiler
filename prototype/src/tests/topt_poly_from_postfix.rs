@@ -14,7 +14,7 @@ fn gen_0(){
     optimize_postfix_using_taylor(&mut sequence, 0.0, 1);
 
     if let Func::Poly(poly) = &sequence[0] {
-        assert_eq!(poly.to_owned(), TsPoly::from_vec(vec![17.0, 3.0]));
+        assert_eq!(poly.to_owned(), TsPoly::from_vec(vec![17.0, 3.0], true));
     }else{
         panic!("Expected to have just one Func::Poly in the sequence, got something else");
     }
@@ -27,7 +27,7 @@ fn gen_1(){
     optimize_postfix_using_taylor(&mut sequence, 0.0, 1);
 
     if let Func::Poly(poly) = &sequence[0] {
-        assert_eq!(poly.to_owned(), TsPoly::from_vec(vec![0.0, 1.0]));
+        assert_eq!(poly.to_owned(), TsPoly::from_vec(vec![0.0, 1.0], true));
     }else{
         panic!("Expected to have just one Func::Poly in the sequence, got something else");
     }
@@ -40,7 +40,7 @@ fn gen_2(){
     optimize_postfix_using_taylor(&mut sequence, 0.0, 3);
 
     if let Func::Poly(poly) = &sequence[0] {
-        assert_eq!(poly.to_owned(), TsPoly::from_vec(vec![7.0, 0.0, -2.0, 1.0]));
+        assert_eq!(poly.to_owned(), TsPoly::from_vec(vec![7.0, 0.0, -2.0, 1.0], true));
     }else{
         panic!("Expected to have just one Func::Poly in the sequence, got something else");
     }
@@ -53,7 +53,7 @@ fn gen_3(){
     optimize_postfix_using_taylor(&mut sequence, 0.0, 4);
 
     if let Func::Poly(poly) = &sequence[0] {
-        assert_eq!(poly.to_owned(), TsPoly::from_vec(vec![8.0, 0.0, 0.0, 1.0, -2.0]));
+        assert_eq!(poly.to_owned(), TsPoly::from_vec(vec![8.0, 0.0, 0.0, 1.0, -2.0], true));
     }else{
         panic!("Expected to have just one Func::Poly in the sequence, got something else");
     }
@@ -66,7 +66,7 @@ fn gen_4(){
     optimize_postfix_using_taylor(&mut sequence, 0.0, 4);
 
     if let Func::Poly(poly) = &sequence[0] {
-        assert_eq!(poly.to_owned(), TsPoly::from_vec(vec![7.0, 1.0, 0.0, 0.0, -2.0]));
+        assert_eq!(poly.to_owned(), TsPoly::from_vec(vec![7.0, 1.0, 0.0, 0.0, -2.0], true));
     }else{
         panic!("Expected to have just one Func::Poly in the sequence, got something else");
     }

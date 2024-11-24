@@ -196,28 +196,18 @@ impl DivAssign for TsPoly{
 
 impl fmt::Display for TsPoly{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut temp_str = String::from("");
-
+        let mut temp_str = String::new();
         let mut started = false;
 
-        for index in (0..Self::DEFAULT_MAX_POW).rev(){
-            if self.coefs[index] == 0.0 {
-                continue;
-            }
+        for index in (0..=self.max_pow).rev(){
+            if self.coefs[index] == 0.0 { continue; }
 
-            if started && self.coefs[index] > 0.0{
-                temp_str += " + ";
-            }
+            if started && self.coefs[index] > 0.0 { temp_str += " + "; }
 
-            if self.coefs[index] != 1.0 {
-                temp_str += format!("{:.1}", &self.coefs[index]).as_str();
-            }
+            if self.coefs[index] != 1.0 { temp_str += &format!("{:.1}", &self.coefs[index]); }
+
             match index {
-                0 => {
-                    if self.coefs[index] == 1.0 {
-                        temp_str += "1";
-                    }
-                },
+                0 if self.coefs[index] == 1.0 => temp_str += "1",
                 1 => {
                     if self.coefs[index] != 1.0{
                         temp_str += "*";
@@ -229,8 +219,7 @@ impl fmt::Display for TsPoly{
                         temp_str += "*";
                     }
 
-                    temp_str += "x^";
-                    temp_str += &index.to_string();
+                    temp_str += &format!("x^{}", index);
                 }
             }
 
@@ -238,6 +227,11 @@ impl fmt::Display for TsPoly{
         }
 
         if !started {temp_str += "0";}
+
+        temp_str += match self.from_x {
+            true => " X",
+            false => " R",
+        };
 
         write!(f, "{}", temp_str)
     }

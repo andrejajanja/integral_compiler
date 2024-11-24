@@ -140,6 +140,21 @@ fn gen_9(){
 }
 
 #[test]
+fn gen_10(){
+    let function = String::from("x*cosh(x)");
+    let mut sequence = lex_function(&function);
+    convert_infix_to_postfix(&mut sequence);
+
+    let mut temp_str = String::new();
+    for elem in sequence {
+        temp_str += &elem.to_string();
+        temp_str += ",";
+    }
+
+    assert_eq!(temp_str, "x,x,cosh,*,")
+}
+
+#[test]
 #[should_panic]
 fn panic_gen_0(){
     let function = String::from("x*random(x)");

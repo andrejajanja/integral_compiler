@@ -108,10 +108,10 @@ impl TsPoly{
         if let Some(temp_argument) = poly_argument { x = temp_argument;}
 
         let mut temp = format!(
-r"  %p0_{} = fadd double 0.0, {:.15e}
-    %tpow0_{} = {}
-    %tmul0_{} = fmul double {:.15e}, {}
-    %p1_{} = fadd double %tmul0_{}, %p0_{}
+r"%p0_{} = fadd double 0.0, {:.15e}
+%tpow0_{} = {}
+%tmul0_{} = fmul double {:.15e}, {}
+%p1_{} = fadd double %tmul0_{}, %p0_{}
 ",
 start_addr, self.coefs[0],
 start_addr, x,
@@ -121,9 +121,9 @@ start_addr, start_addr, start_addr,
 
         for i in 1..=self.max_pow-1 {
             temp += format!(
-r"  %tpow{}_{} = fmul double %tpow{}_{}, {}
-    %tmul{}_{} = fmul double {:.15e}, %tpow{}_{}
-    %p{}_{} = fadd double %tmul{}_{}, %p{}_{}
+r"%tpow{}_{} = fmul double %tpow{}_{}, {}
+%tmul{}_{} = fmul double {:.15e}, %tpow{}_{}
+%p{}_{} = fadd double %tmul{}_{}, %p{}_{}
 ",
 i, start_addr, i-1, start_addr, x,
 i, start_addr, self.coefs[i+1], i, start_addr,

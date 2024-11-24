@@ -367,7 +367,7 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
                     sequence.remove(*index-1);
                     *index-=2;
                 }
-                Func::Poly(poly) => {
+                Func::Poly(poly) if poly.from_x => {
                     poly.coefs[1] -= 1.0;
                     if poly.max_pow == 1 && poly.coefs[1] == 0.0{
                         poly.max_pow = 0;
@@ -380,28 +380,27 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
                 _ => {}
             }
         }
+        //TODO CHECK IF THIS IMPLEMENTATION MAKES MORE SENCE FOR ALL THESE CASES
         Func::Mul => {
-            match &mut sequence[*index-2] {
+            if match &mut sequence[*index-2] {
                 Func::X => {
                     sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, 0.0, 1.0], true));
-                    sequence.remove(*index);
-                    sequence.remove(*index-1);
-                    *index-=2;
-                }
+                    true
+                },
                 Func::Const(value) => {
                     sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![0.0, *value], true));
-                    sequence.remove(*index);
-                    sequence.remove(*index-1);
-                    *index-=2;
-                }
-                Func::Poly(poly) => {
-                    *poly *= TsPoly::from_vec(vec![0.0, 1.0]);
+                    true
+                },
+                Func::Poly(poly) if poly.from_x => {
+                    *poly *= TsPoly::from_vec(vec![0.0, 1.0], true);
                     poly.truncate(poly_degree);
-                    sequence.remove(*index);
-                    sequence.remove(*index-1);
-                    *index-=2;
-                }
-                _ => {}
+                    true  
+                },
+                _ => false
+            } {
+                sequence.remove(*index);
+                sequence.remove(*index-1);
+                *index-=2;
             }
         }
         Func::Div => {
@@ -419,40 +418,28 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
     }
 }
 
+//THIS IS CODE THAT APPLIES ADITIONAL OPTIMIZATION
+// if poly.from_x {
+//     temp_poly.of(poly.clone()); //FIXME Implement that of method works on a reference, not a value itself
+//     sequence[*index-1] = Func::Poly(temp_poly);
+//     sequence.remove(*index);
+//     *index-=1;
+// }else{
+//     temp_poly.from_x = false;
+//     sequence[*index] = Func::Poly(temp_poly);
+// }
+
+
 ///Polynomial is the first operand, but &mut sequence[*index-2] is the first operand for binary operation, while polynomial is the second operand
-// #[inline(always)]
-fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, index: &mut usize, precision_center: f64, poly_degree: usize){
+#[inline(always)]
+fn poly_handler(mut poly: TsPoly , operation: Func, sequence: &mut Vec<Func>, index: &mut usize, precision_center: f64, poly_degree: usize){
     match operation {
-        Func::Sin => {
-            let mut temp_poly = TsPoly::generate_sin(precision_center, poly_degree);
-            temp_poly.of(poly.clone()); //FIXME Implement that of method works on a reference, not a value itself
-            sequence[*index-1] = Func::Poly(temp_poly);
-            sequence.remove(*index);
-            *index-=1;
-        }
-        Func::Cos => {
-            let mut temp_poly = TsPoly::generate_cos(precision_center, poly_degree);
-            temp_poly.of(poly.clone());
-            sequence[*index-1] = Func::Poly(temp_poly);
-            sequence.remove(*index);
-            *index-=1;
-        }
+        Func::Sin => sequence[*index] = Func::Poly(TsPoly::generate_sin(precision_center, poly_degree, false)),
+        Func::Cos => sequence[*index] = Func::Poly(TsPoly::generate_cos(precision_center, poly_degree, false)),
         Func::Tg => todo!("Need to impelment taylor generation for tg"),
         Func::Ctg => todo!("Need to impelment taylor generation for ctg"),
-        Func::Sinh => {
-            let mut temp_poly = TsPoly::generate_sinh(precision_center, poly_degree);
-            temp_poly.of(poly.clone());
-            sequence[*index-1] = Func::Poly(temp_poly);
-            sequence.remove(*index);
-            *index-=1;
-        }
-        Func::Cosh => {
-            let mut temp_poly = TsPoly::generate_cosh(precision_center, poly_degree);
-            temp_poly.of(poly.clone());
-            sequence[*index-1] = Func::Poly(temp_poly);
-            sequence.remove(*index);
-            *index-=1;
-        }
+        Func::Sinh => sequence[*index] = Func::Poly(TsPoly::generate_sinh(precision_center, poly_degree, false)),
+        Func::Cosh => sequence[*index] = Func::Poly(TsPoly::generate_cosh(precision_center, poly_degree, false)),
         Func::Tgh => todo!("Need to impelment taylor generation for tgh"),
         Func::Ctgh => todo!("Need to impelment taylor generation for ctgh"),
         Func::Atg => todo!("Need to impelment taylor generation for atg"),
@@ -463,23 +450,11 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
         Func::Arcosh => todo!("Need to impelment taylor generation for acosh"),
         Func::Artgh => todo!("Need to impelment taylor generation for actg"),
         Func::Arctgh => todo!("Need to impelment taylor generation for actgh"),
-        Func::Ln => {
-            let mut temp_poly = TsPoly::generate_ln(precision_center, poly_degree);
-            temp_poly.of(poly.clone());
-            sequence[*index-1] = Func::Poly(temp_poly);
-            sequence.remove(*index);
-            *index-=1;
-        }
-        Func::Exp => {
-            let mut temp_poly = TsPoly::generate_exp(precision_center, poly_degree);
-            temp_poly.of(poly.clone());
-            sequence[*index-1] = Func::Poly(temp_poly);
-            sequence.remove(*index);
-            *index-=1;
-        }
+        Func::Ln => sequence[*index] = Func::Poly(TsPoly::generate_ln(precision_center, poly_degree, false)),
+        Func::Exp => sequence[*index] = Func::Poly(TsPoly::generate_exp(precision_center, poly_degree, false)),
         Func::Add => {
             match &sequence[*index-2] {
-                Func::X => {
+                Func::X if poly.from_x => {
                     poly.coefs[1] += 1.0;
                     if poly.coefs[1] != 0.0 && poly.max_pow == 0 {
                         poly.max_pow = 1;
@@ -497,10 +472,10 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
                     sequence.remove(*index-1);
                     *index-=2;
                 }
-                Func::Poly(poly_two) => {
-                    *poly+=poly_two.clone();
-                    poly.truncate(poly_degree);
-                    sequence[*index-2] = Func::Poly(poly.clone());
+                Func::Poly(poly_two) if poly_two.from_x && poly.from_x => {
+                    let mut temp = poly+poly_two.clone();
+                    temp.truncate(poly_degree);
+                    sequence[*index-2] = Func::Poly(temp);
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
@@ -510,8 +485,8 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
         }
         Func::Sub => {
             match &sequence[*index-2] {
-                Func::X => {
-                    let mut temp = TsPoly::from_vec(vec![0.0, 1.0])-poly.clone();
+                Func::X if poly.from_x => {
+                    let mut temp = TsPoly::from_vec(vec![0.0, 1.0], true)-poly.clone();
                     temp.truncate(poly_degree);
                     sequence[*index-2] = Func::Poly(temp);
                     sequence.remove(*index);
@@ -519,12 +494,12 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
                     *index-=2;
                 }
                 Func::Const(value) => {
-                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![*value])-poly.clone());
+                    sequence[*index-2] = Func::Poly(TsPoly::from_vec(vec![*value], poly.from_x)-poly.clone());
                     sequence.remove(*index);
                     sequence.remove(*index-1);
                     *index-=2;
                 }
-                Func::Poly(poly_two) => {
+                Func::Poly(poly_two) if poly_two.from_x && poly.from_x => {
                     let mut temp = poly_two.clone()-poly.clone();
                     temp.truncate(poly_degree);
                     sequence[*index-2] = Func::Poly(temp);
@@ -537,8 +512,8 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
         }
         Func::Mul => {
             match &mut sequence[*index-2] {
-                Func::X => {
-                    let mut temp = TsPoly::from_vec(vec![0.0, 1.0])*poly.clone();
+                Func::X if poly.from_x => {
+                    let mut temp = TsPoly::from_vec(vec![0.0, 1.0], true)*poly.clone();
                     temp.truncate(poly_degree);
                     sequence[*index-2] = Func::Poly(temp);
                     sequence.remove(*index);
@@ -551,7 +526,7 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
                     sequence.remove(*index-1);
                     *index-=2;
                 }
-                Func::Poly(poly_two) => {
+                Func::Poly(poly_two) if poly_two.from_x && poly.from_x => {
                     let mut temp = poly_two.clone()*poly.clone();
                     temp.truncate(poly_degree);
                     sequence[*index-2] = Func::Poly(temp);
@@ -566,20 +541,46 @@ fn poly_handler(poly: &mut TsPoly , operation: Func, sequence: &mut Vec<Func>, i
     }
 }
 
+fn transition_op_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, precision_center: f64, poly_degree: usize) {
+    match operation {
+        Func::Sin => sequence[*index] = Func::Poly(TsPoly::generate_sin(precision_center, poly_degree, false)),
+        Func::Cos => sequence[*index] = Func::Poly(TsPoly::generate_cos(precision_center, poly_degree, false)),
+        Func::Tg => todo!("Need to impelment taylor generation for tg"),
+        Func::Ctg => todo!("Need to impelment taylor generation for ctg"),
+        Func::Sinh => sequence[*index] = Func::Poly(TsPoly::generate_sinh(precision_center, poly_degree, false)),
+        Func::Cosh => sequence[*index] = Func::Poly(TsPoly::generate_cosh(precision_center, poly_degree, false)),
+        Func::Tgh => todo!("Need to impelment taylor generation for tgh"),
+        Func::Ctgh => todo!("Need to impelment taylor generation for ctgh"),
+        Func::Atg => todo!("Need to impelment taylor generation for atg"),
+        Func::Actg => todo!("Need to impelment taylor generation for actg"),
+        Func::Asin => todo!("Need to impelment taylor generation for asin"),
+        Func::Acos => todo!("Need to impelment taylor generation for acos"),
+        Func::Arsinh => todo!("Need to impelment taylor generation for asinh"),
+        Func::Arcosh => todo!("Need to impelment taylor generation for acosh"),
+        Func::Artgh => todo!("Need to impelment taylor generation for actg"),
+        Func::Arctgh => todo!("Need to impelment taylor generation for actgh"),
+        Func::Ln => sequence[*index] = Func::Poly(TsPoly::generate_ln(precision_center, poly_degree, false)),
+        Func::Exp => sequence[*index] = Func::Poly(TsPoly::generate_exp(precision_center, poly_degree, false)),
+        Func::Sqrt => todo!(),
+        _ => {}
+    }
+}
+
+
 //TODO write detiled description for all component functions in this file
 //FIXME Optimize all these clone operations in handler functions
 pub fn optimize_postfix_using_taylor(sequence: &mut Vec<Func>, precision_center: f64, poly_degree: usize){
     let mut index: usize = 1;
     while index < sequence.len() {
-        let mut current_elem = sequence[index-1].clone();
+        let current_elem = sequence[index-1].clone();
         let operation = sequence[index].clone();
 
-        if let Func::Const(value) =  current_elem{
-            const_handler(operation, sequence, value, &mut index, poly_degree);
-        }else if let Func::X = current_elem {
-            x_handler(operation, sequence, &mut index, precision_center, poly_degree);
-        }else if let Func ::Poly(poly) = &mut current_elem{
-            poly_handler(poly, operation, sequence, &mut index, precision_center, poly_degree);
+        match current_elem {
+            Func::X => x_handler(operation, sequence, &mut index, precision_center, poly_degree),
+            Func::Const(value) => const_handler(operation, sequence, value, &mut index, poly_degree),
+            Func::Poly(poly) => poly_handler(poly, operation, sequence, &mut index, precision_center, poly_degree),
+            Func::Div | Func::Pow => transition_op_handler(operation, sequence, &mut index, precision_center, poly_degree),
+            _ => {},
         }
         
         index+=1;
