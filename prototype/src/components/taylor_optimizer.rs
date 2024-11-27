@@ -67,7 +67,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
             *index-=1;
         }
         Func::Asin => {
-            if value < 0.0 || value > 1.0 {
+            if !(0.0..=1.0).contains(&value) {
                 unrecoverable_error!(
                     "Taylor optimization | Invalid domain error during static const eval, asin on a value outside of domain",
                     format!("{} | {:?}", value, sequence)
@@ -78,7 +78,7 @@ fn const_handler(operation: Func, sequence: &mut Vec<Func>, value: f64, index: &
             *index-=1;
         }
         Func::Acos => {
-            if value < 0.0 || value > 1.0 {
+            if !(0.0..=1.0).contains(&value) {
                 unrecoverable_error!(
                     "Taylor optimization | Invalid domain error during static const eval, acos on a value outside of domain",
                     format!("{} | {:?}", value, sequence)
@@ -404,14 +404,11 @@ fn x_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, preci
             }
         }
         Func::Div => {
-            match &mut sequence[*index-2] {
-                Func::X => {
-                    sequence[*index-2] = Func::Const(1.0);
-                    sequence.remove(*index);
-                    sequence.remove(*index-1);
-                    *index-=2;
-                }
-                _ => {}
+            if sequence[*index-2] == Func::X{
+                sequence[*index-2] = Func::Const(1.0);
+                sequence.remove(*index);
+                sequence.remove(*index-1);
+                *index-=2;
             }
         }
         _ => {}
@@ -541,7 +538,7 @@ fn poly_handler(mut poly: TsPoly , operation: Func, sequence: &mut Vec<Func>, in
     }
 }
 
-fn transition_op_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut usize, precision_center: f64, poly_degree: usize) {
+fn transition_op_handler(operation: Func, sequence: &mut [Func], index: &mut usize, precision_center: f64, poly_degree: usize) {
     match operation {
         Func::Sin => sequence[*index] = Func::Poly(TsPoly::generate_sin(precision_center, poly_degree, false)),
         Func::Cos => sequence[*index] = Func::Poly(TsPoly::generate_cos(precision_center, poly_degree, false)),
@@ -561,11 +558,10 @@ fn transition_op_handler(operation: Func, sequence: &mut Vec<Func>, index: &mut 
         Func::Arctgh => todo!("Need to impelment taylor generation for actgh"),
         Func::Ln => sequence[*index] = Func::Poly(TsPoly::generate_ln(precision_center, poly_degree, false)),
         Func::Exp => sequence[*index] = Func::Poly(TsPoly::generate_exp(precision_center, poly_degree, false)),
-        Func::Sqrt => todo!(),
+        Func::Sqrt => todo!("Need to implement handling of SQRT "),
         _ => {}
     }
 }
-
 
 //TODO write detiled description for all component functions in this file
 //FIXME Optimize all these clone operations in handler functions

@@ -7,7 +7,7 @@ use std::process::exit;
 fn try_lexing(chunk: &str, function: &str) -> Option<Func> {
     match chunk.len() {
         1 => {
-            match &chunk[..]{
+            match chunk{
                 "*" => Some(Func::Mul),
                 "/" => Some(Func::Div),
                 "+" => Some(Func::Add),
@@ -20,7 +20,7 @@ fn try_lexing(chunk: &str, function: &str) -> Option<Func> {
             }
         }
         2 => {
-            match &chunk[..]{
+            match chunk{
                 "ln" => Some(Func::Ln),
                 "e^" => Some(Func::Exp),
                 "tg" => Some(Func::Tg),
@@ -28,7 +28,7 @@ fn try_lexing(chunk: &str, function: &str) -> Option<Func> {
             }
         }
         3 => {
-            match &chunk[..]{
+            match chunk{
                 "sin" => Some(Func::Sin),
                 "cos" => Some(Func::Cos),
                 "ctg" => Some(Func::Ctg),
@@ -38,7 +38,7 @@ fn try_lexing(chunk: &str, function: &str) -> Option<Func> {
             }
         }
         4 => {
-            match &chunk[..]{
+            match chunk{
                 "sqrt" => Some(Func::Sqrt),
                 "asin" => Some(Func::Asin),
                 "acos" => Some(Func::Acos),
@@ -50,7 +50,7 @@ fn try_lexing(chunk: &str, function: &str) -> Option<Func> {
         _ => {
             unrecoverable_error!(
                 "Lexing Error | Highlighted part of a function string is unknown/unsupported function",
-                &function.replace(&chunk, &format!("{}{} {} {}{}", Color::CBlack, Color::BYellow,&chunk, Color::CYellow, Color::BBlack))
+                &function.replace(chunk, &format!("{}{} {} {}{}", Color::CBlack, Color::BYellow,&chunk, Color::CYellow, Color::BBlack))
             );
         }
     }
@@ -66,7 +66,7 @@ pub fn lex_function(function: &str) -> Vec<Func> {
         let mut temp = i;
 
         while let Some(ch) = function.chars().nth(temp) {
-            if ch.is_digit(10) || ch == '.' {
+            if ch.is_ascii_digit() || ch == '.' {
                 buffer+=1;
                 temp+=1;
                 continue;
@@ -74,9 +74,8 @@ pub fn lex_function(function: &str) -> Vec<Func> {
             break;
         }
 
-        let temp_node: Option<Func>;
-        if i == temp{
-            temp_node = try_lexing(&function[i..i+buffer], &function); //FIXME this is where some performance is lost due to elegant error handling
+        let temp_node: Option<Func> = if i == temp {
+            try_lexing(&function[i..i+buffer], function)
         }else {
             buffer-=1;
             let temp_const = function[i..i + buffer].parse::<f64>().unwrap_or_else( |_op| {
@@ -85,8 +84,8 @@ pub fn lex_function(function: &str) -> Vec<Func> {
                     &function[i..i + buffer]
                 );
             });
-            temp_node = Some(Func::Const(temp_const));
-        }
+            Some(Func::Const(temp_const))
+        };
 
         match temp_node {
             Some(list_node) => {
@@ -164,28 +163,20 @@ fn find_unique_funcs_iter(root: &Node) -> Vec<Func>{
     let helper_root = root.clone();
     let mut st: Vec<Node> = Vec::<Node>::new();
     st.push(helper_root);
-    loop {
-        match st.pop(){
-            Some(mut nd) => {
-                loop{
-                    if !unique_funcs.contains(&nd.op) && matches!(nd.op,Func::Const(_)) && nd.op != Func::X{
-                        unique_funcs.push(nd.op);
-                    }
-
-                    match &nd.right {
-                        Some(scnd) => st.push(*scnd.clone()),
-                        None => {}
-                    }
-                    match &nd.left {
-                        Some(x) => {
-                            nd = *x.clone();
-                            continue;
-                        }
-                        None => break,
-                    } 
-                }
+    while let Some(mut nd) = st.pop(){
+        loop{
+            if !unique_funcs.contains(&nd.op) && matches!(nd.op,Func::Const(_)) && nd.op != Func::X{
+                unique_funcs.push(nd.op);
             }
-            None => break,
+            if let Some(scnd) = &nd.right {
+                st.push(*scnd.clone());
+            }
+            if let Some(x) = &nd.left{
+                nd = *x.clone();
+                    continue;
+            }else{
+                break;
+            }
         }
     }
 
@@ -197,29 +188,17 @@ pub fn tree_to_string_iter(root: &Node) -> String {
     let mut content = String::from("");
     let mut st: Vec<Node> = Vec::<Node>::new();
     st.push(helper_root);
-    loop {
-        match st.pop(){
-            Some(mut nd) => {
-                loop{
-                    content += &(nd.op.to_string() + ",");
-                    match &nd.right {
-                        Some(scnd) => {
-                            st.push(*scnd.clone());
-                        }
-                        None => {}
-                    }
-                    match &nd.left {
-                        Some(x) => {
-                            nd = *x.clone();
-                            continue;
-                        }
-                        None => {
-                            break;
-                        }
-                    } 
-                }
+
+    while let Some(mut nd) = st.pop() {
+        loop{
+            content += &(nd.op.to_string() + ",");
+            if let Some(scnd) = &nd.right {
+                st.push(*scnd.clone());
             }
-            None => {
+            if let Some(x) = &nd.left {
+                nd = *x.clone();
+                continue;
+            }else{
                 break;
             }
         }

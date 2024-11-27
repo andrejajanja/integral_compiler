@@ -63,7 +63,7 @@ fn generate_ir_from_postfix(mut elems: Vec<Func>) -> (String,Vec<Func>, i16){
             _ => {
                 unrecoverable_error!(
                     "Frontend error | During compiling of postfix form",
-                    format!("Failed to compile function due unsupported node type '{}', in postfix form.", temp.to_string())
+                    format!("Failed to compile function due unsupported node type '{}', in postfix form.", temp)
                 );
             }
         }
@@ -72,7 +72,7 @@ fn generate_ir_from_postfix(mut elems: Vec<Func>) -> (String,Vec<Func>, i16){
     (code, unique_funcs, address-1)
 }
 
-pub fn generate_ir(function: &String) -> String {
+pub fn generate_ir(function: &str) -> String {
     let mut function_collection = lex_function(function);
     convert_infix_to_postfix(&mut function_collection);
 

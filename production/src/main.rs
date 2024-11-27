@@ -13,10 +13,7 @@ use prototype::{
     }
 };
 use std::{
-    ffi::{CString, CStr},
-    ptr,
-    env::args,
-    process::exit
+    env::args, ffi::{CStr, CString}, process::exit, ptr::{self, NonNull}
 };
 use llvm_sys::{
     core::*,
@@ -53,15 +50,15 @@ fn main(){
     let parameters = parse_input_file(&args[1]);
 
     let llvm_ir = generate_ir(&parameters.function);
-
-    let ir_c_string = CString::new(llvm_ir.clone()).unwrap();
+    let llvm_ir_len = llvm_ir.len();
+    let ir_c_string = CString::new(llvm_ir).unwrap();
     let fja;
 
     unsafe {
         let context = LLVMContextCreate();
         let buffer = LLVMCreateMemoryBufferWithMemoryRangeCopy(
             ir_c_string.as_ptr(),
-            llvm_ir.len(), 
+            llvm_ir_len, 
             CString::new("LLVM IR").unwrap().as_ptr()
         );
 
@@ -115,10 +112,14 @@ fn main(){
 
         let buffer_data = std::slice::from_raw_parts_mut(buffer_start, buffer_size as usize);
 
-        let object_address: *const u8 = &__code_buffer;
+        let object_space: *const u8 = &__code_buffer;
 
-        fja= link_buffer(buffer_data, object_address as *mut u8);
-        std::ptr::copy_nonoverlapping(buffer_data.as_ptr(), object_address as *mut u8, buffer_size);
+        fja= link_buffer(
+            buffer_data,
+            NonNull::new_unchecked(object_space as *mut u8)
+        );
+
+        std::ptr::copy_nonoverlapping(buffer_data.as_ptr(), object_space as *mut u8, buffer_size);
 
         LLVMDisposeMemoryBuffer(memory_buffer);
         LLVMDisposeModule(module);

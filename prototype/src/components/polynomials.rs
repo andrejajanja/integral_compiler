@@ -27,12 +27,12 @@ impl TsPoly{
     pub fn from_vec(mut provided_coefs: Vec<f64>, from_x: bool) -> Self{
         provided_coefs.resize(Self::DEFAULT_MAX_POW, 0.0);
         let mut temp_pow: usize = 0;
-        for i in 0..Self::DEFAULT_MAX_POW {
-            if provided_coefs[i] != 0.0 {
+        for (i, coef) in provided_coefs.iter().enumerate().take(Self::DEFAULT_MAX_POW)  {
+            if *coef != 0.0 {
                 temp_pow = i;
             }
         }
-        Self { coefs: provided_coefs, max_pow: temp_pow, from_x: from_x}
+        Self { coefs: provided_coefs, max_pow: temp_pow, from_x}
     }
 
     pub fn put_offset(&mut self, mut offset: f64){
@@ -109,17 +109,21 @@ impl TsPoly{
 
         let mut temp = format!(
 r"%p0_{} = fadd double 0.0, {:.15e}
-%tpow0_{} = {}
 %tmul0_{} = fmul double {:.15e}, {}
 %p1_{} = fadd double %tmul0_{}, %p0_{}
+%tpow1_{} = fmul double %x, %x
+%tmul1_{} = fmul double {:.15e}, %tpow1_{}
+%p2_{} = fadd double %tmul1_{}, %p1_{}
 ",
 start_addr, self.coefs[0],
-start_addr, x,
 start_addr, self.coefs[1], x,
 start_addr, start_addr, start_addr,
+start_addr,
+start_addr, self.coefs[1], start_addr,
+start_addr, start_addr, start_addr
         );
 
-        for i in 1..=self.max_pow-1 {
+        for i in 2..=self.max_pow-1 {
             temp += format!(
 r"%tpow{}_{} = fmul double %tpow{}_{}, {}
 %tmul{}_{} = fmul double {:.15e}, %tpow{}_{}

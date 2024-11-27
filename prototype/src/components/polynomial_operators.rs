@@ -202,24 +202,24 @@ impl fmt::Display for TsPoly{
         for index in (0..=self.max_pow).rev(){
             if self.coefs[index] == 0.0 { continue; }
 
-            if started && self.coefs[index] > 0.0 { temp_str += " + "; }
+            if started && self.coefs[index] > 0.0 { temp_str += "+ "; }
 
-            if self.coefs[index] != 1.0 { temp_str += &format!("{:.1}", &self.coefs[index]); }
+            if self.coefs[index] != 1.0 { temp_str += &format!("{:.10}", &self.coefs[index]); }
 
             match index {
-                0 if self.coefs[index] == 1.0 => temp_str += "1",
+                0 => {},
                 1 => {
                     if self.coefs[index] != 1.0{
                         temp_str += "*";
                     }
-                    temp_str += "x";
+                    temp_str += "x ";
                 },
                 _ => {
                     if self.coefs[index] != 1.0{
                         temp_str += "*";
                     }
 
-                    temp_str += &format!("x^{}", index);
+                    temp_str += &format!("x^{} ", index);
                 }
             }
 

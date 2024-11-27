@@ -124,7 +124,7 @@ impl fmt::Display for Func {
             Func::Arcosh => String::from("arcosh"),
             Func::Artgh => String::from("artgh"),
             Func::Arctgh => String::from("arctgh"),
-            Func::Poly(ts_poly) => String::from(ts_poly.to_string()),
+            Func::Poly(ts_poly) => ts_poly.to_string(),
         };
 
         write!(f, "{}", temp)
@@ -161,5 +161,11 @@ impl Node {
             right: None,
             op: operation
         }
+    }
+}
+
+impl Default for Node {
+    fn default() -> Self {
+        Self::new()
     }
 }

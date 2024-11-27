@@ -1,5 +1,5 @@
 target
-prototype/example.o
+example.o
 app_config.toml
 benchmarks
 parameters_list.txt

@@ -47,7 +47,7 @@ pub struct IntegralConfig{
 pub fn parse_input_file(file_path: &str) -> IntegralConfig {
     let config_content = read_to_string(file_path).expect("Failed to read config file");
     let config: Config = toml::from_str(&config_content).expect("Failed to parse contents of config file");
-    return config.integral_config;
+    config.integral_config
 }
 
 pub fn safely_pop_from_stacks(op_st: &mut Vec<i16>, cnst_st: &mut Vec<String>, one_two: bool) -> String{
@@ -63,11 +63,9 @@ pub fn safely_pop_from_stacks(op_st: &mut Vec<i16>, cnst_st: &mut Vec<String>, o
             0 => String::from("%x"),
             _ => String::from("%") + &x.to_string(),
         }
+    }else if one_two {
+        unrecoverable_error!("Frontend error | During compiling of postfix form", "No operands on the stack, even though at least one was expected to be.");
     }else{
-        if one_two {
-            unrecoverable_error!("Frontend error | During compiling of postfix form", "No operands on the stack, even though at least one was expected to be.");
-        }else{
-            unrecoverable_error!("Frontend error | During compiling of postfix form", "No operands on the stack, even though at least two was expected to be.");
-        }
+        unrecoverable_error!("Frontend error | During compiling of postfix form", "No operands on the stack, even though at least two was expected to be.");
     }
 }
