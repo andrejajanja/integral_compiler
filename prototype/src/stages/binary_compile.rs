@@ -39,7 +39,13 @@ pub fn generate_binary_from_ir(llvm_ir: String) -> (Vec<u8>, usize){
         let mut module: LLVMModuleRef = ptr::null_mut();
         let mut error: *mut i8 = ptr::null_mut();
         if LLVMParseIRInContext(context, buffer, &mut module, &mut error) != 0 {
-            unrecoverable_error!("LLVM Error | Error occured while lexing and parsing the IR string", *error);
+            let c_str = CStr::from_ptr(error); // Interpret as CStr
+            let temp_str = match c_str.to_str() {
+                Ok(rust_str) => rust_str,
+                Err(e) => &format!("Failed to convert to &str: {}", e),
+            };
+
+            unrecoverable_error!("LLVM Error | Error occured while lexing and parsing the IR string", temp_str);
         }
 
         let result = LLVM_InitializeNativeTarget();
@@ -56,7 +62,12 @@ pub fn generate_binary_from_ir(llvm_ir: String) -> (Vec<u8>, usize){
         let mut target: LLVMTargetRef = ptr::null_mut();
 
         if LLVMGetTargetFromTriple(triple, &mut target, &mut error) != 0 {
-            unrecoverable_error!("LLVM Error | Error getting target information", *error);
+            let c_str = CStr::from_ptr(error); // Interpret as CStr
+            let temp_str = match c_str.to_str() {
+                Ok(rust_str) => rust_str,
+                Err(e) => &format!("Failed to convert to &str: {}", e),
+            };
+            unrecoverable_error!("LLVM Error | Error getting target information", temp_str);
         }
 
         let target_machine = LLVMCreateTargetMachine(
@@ -170,6 +181,7 @@ pub fn generate_function(function: &str, precision_center:f64, max_power: usize)
     convert_infix_to_postfix(&mut sequence);
     optimize_postfix_using_taylor(&mut sequence, precision_center, max_power);
     let ir_code = generate_ir_from_taylor_sequence(&sequence);
+    println!("{}", ir_code);
     let (mut buffer_data, buffer_len) = generate_binary_from_ir(ir_code);
 
     unsafe {

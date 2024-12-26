@@ -10,7 +10,7 @@ use std::{
     ptr::NonNull
 };
 
-pub type FunctionType = fn(f64) -> f64;
+pub type FunctionType = fn(f64, *mut f64) -> f64;
 
 fn parse_symbol_table<'a>(symbols: &mut Vec<&'a str>, sym_table: Option<&[u8]>, object_file_buffer: &'a [u8], string_table_start: usize) -> usize{
     let mut temp_fja_offset: u64 = u64::MAX;
@@ -152,9 +152,10 @@ pub fn link_buffer(buffer: &mut[u8], buffer_ptr: NonNull<u8>) -> FunctionType{
             buffer[symbol_offset..symbol_offset+4].copy_from_slice(&offset[..4]);
             entry_offset+=24;
         }
-    }else{
-        unrecoverable_error!("Linker Error | Invalid result of ELF headers analisys", "Relative text section wasn't found in the ELF byte buffer");
     }
+    //else{
+    //     unrecoverable_error!("Linker Error | Invalid result of ELF headers analisys", "Relative text section wasn't found in the ELF byte buffer");
+    // }
 
     unsafe{
         std::mem::transmute::<*mut u8, FunctionType>(raw_buffer_ptr.add(fja_offset))
