@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "prototype",
-    "production"
+    "production",
+    "ploter"
 ]
 
 resolver = "2"

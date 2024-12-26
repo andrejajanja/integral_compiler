@@ -1,8 +1,6 @@
+*.o
+*.csv
 target
-example.o
-app_config.toml
 benchmarks
-parameters_list.txt
-cpu_feature_list.txt
-taylors.png
 numerical_analysys/venv
+laptop_system_docs

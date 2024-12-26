@@ -31,6 +31,8 @@ pub fn print_help() {
     Made by Andreja Janković; Year 2024; E-mail: andrejajanja@gmail.com\n\n");
 }
 
+
+//Production config file parser
 #[derive(Deserialize, Debug)]
 struct Config{
     integral_config: IntegralConfig
@@ -48,6 +50,28 @@ pub fn parse_input_file(file_path: &str) -> IntegralConfig {
     let config_content = read_to_string(file_path).expect("Failed to read config file");
     let config: Config = toml::from_str(&config_content).expect("Failed to parse contents of config file");
     config.integral_config
+}
+
+//Ploter config file parser
+#[derive(Deserialize, Debug)]
+struct PlotConfig{
+    plot_conf: PlotConf
+}
+
+#[derive(Deserialize, Debug)]
+pub struct PlotConf{
+    pub function: String,
+    pub poly_power: usize,
+    pub precision_center: f64,
+    pub epsilon: f64,
+    pub samples: usize,
+    pub path: String
+}
+
+pub fn parse_plot_input_file(file_path: &str) -> PlotConf {
+    let config_content = read_to_string(file_path).expect("Failed to read config file");
+    let config: PlotConfig = toml::from_str(&config_content).expect("Failed to parse contents of config file");
+    config.plot_conf
 }
 
 pub fn safely_pop_from_stacks(op_st: &mut Vec<i16>, cnst_st: &mut Vec<String>, one_two: bool) -> String{

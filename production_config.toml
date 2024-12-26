@@ -1,0 +1,5 @@
+[integral_config]
+function = "sin(x)*ln(x)"
+range_start = 1.0
+range_end = 2.0
+samples = 1000000
