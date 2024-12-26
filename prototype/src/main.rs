@@ -8,7 +8,7 @@ use crate::stages::binary_compile::{generate_binary_from_ir, save_generated_bina
 use crate::stages::custom_ir_compile::generate_custom_function;
 
 fn main(){
-    let ir_code = String::from(r"define double @fja(double %x, double* %array_ptr){
+    let _ir_code = String::from(r"define double @fja(double %x, double* %array_ptr){
 %tpow1_0 = fmul double %x, %x
 %e1 = getelementptr double, double* %array_ptr, i64 1
 store double %tpow1_0, double* %e1
@@ -40,17 +40,16 @@ store double %tpow7_0, double* %e7
 ret double %tpow7_0
 }
 ");
-    let fja = generate_custom_function(ir_code);
+    // let fja = generate_custom_function(ir_code);
 
     let x: f64 = 1.1;
-
     let mut buffer: Vec<f64> = vec![0.0; 8];
     buffer[0] = x;
-    let ptr = buffer.as_mut_ptr();
+    // let ptr = buffer.as_mut_ptr();
 
-    // let fja = generate_function("sin(x)*exp(x)", 1.0, 8);
-    fja(x, ptr);
-    println!("{:?}", buffer);
+    let fja = generate_function("sin(x)*exp(x)", 1.0, 8);
+    
+    println!("P(x) = {}", fja(x));
     
     //save_generated_binary_to_file(temp, String::from("example.o"));
 

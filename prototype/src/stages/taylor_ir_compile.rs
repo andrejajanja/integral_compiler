@@ -102,6 +102,7 @@ pub fn generate_ir_from_taylor_sequence(sequence: &[Func]) -> String {
         match elem {
             Func::Poly(ts_poly) => {
                 let temp_code: String; let register: String;
+                //println!("{:?}", &ts_poly.coefs);
 
                 if ts_poly.from_x {
                     if generated_poly_addr < 0 {

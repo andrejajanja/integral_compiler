@@ -10,7 +10,8 @@ use std::{
     ptr::NonNull
 };
 
-pub type FunctionType = fn(f64, *mut f64) -> f64;
+//pub type FunctionType = fn(f64, *mut f64) -> f64;
+pub type FunctionType = fn(f64) -> f64;
 
 fn parse_symbol_table<'a>(symbols: &mut Vec<&'a str>, sym_table: Option<&[u8]>, object_file_buffer: &'a [u8], string_table_start: usize) -> usize{
     let mut temp_fja_offset: u64 = u64::MAX;
