@@ -119,7 +119,7 @@ start_addr, self.coefs[0],
 start_addr, self.coefs[1], x,
 start_addr, start_addr, start_addr,
 start_addr,
-start_addr, self.coefs[1], start_addr,
+start_addr, self.coefs[2], start_addr,
 start_addr, start_addr, start_addr
         );
 

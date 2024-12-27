@@ -1,7 +1,7 @@
 [plot_conf]
-function = "sin(x)*exp(x)"
-poly_power = 8
+function = "ln(x)*cos(x)"
+poly_power = 5
 precision_center = 1.0
-epsilon = 0.2
-samples = 10000
+epsilon = 0.1
+samples = 100
 path="./benchmarks/poly_func.csv"

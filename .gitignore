@@ -4,3 +4,5 @@ target
 benchmarks
 numerical_analysys/venv
 laptop_system_docs
+ploter_config.toml
+production_config.toml

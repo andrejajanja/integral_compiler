@@ -41,7 +41,7 @@ impl TsPoly {
 
         
         let mut fact: f64 = 1.0;
-        temp.coefs[0] = f64::sin(offset);
+        temp.coefs[0] = f64::cos(offset);
         for i in 1..=max_p{
             fact *= i as f64;
 

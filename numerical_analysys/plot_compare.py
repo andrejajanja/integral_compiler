@@ -1,4 +1,5 @@
 import pandas as pd
+from numpy import sin, cos, log, exp
 import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
@@ -13,9 +14,17 @@ def plot_csv_values(csv_file):
         if 'x' not in data.columns or 'y' not in data.columns:
             raise ValueError("CSV must have 'x' and 'y' columns.")
         
+        std_data = []
+
+        for x in data['x']:
+            std_data.append(
+                log(x)*cos(x)
+            )
+
         # Plot the data
         plt.figure(figsize=(10, 6))
         plt.plot(data['x'], data['y'], marker='o', linestyle='-', color='r')
+        plt.plot(data['x'], std_data, marker='o', linestyle='-', color='g')
         plt.title('Function values')
         plt.xlabel('x')
         plt.ylabel('y')
