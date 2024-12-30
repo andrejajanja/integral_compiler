@@ -1,6 +1,6 @@
 [plot_conf]
-function = "ln(x)*cos(x)"
-poly_power = 5
+function = "ln(x)"
+poly_power = 8
 precision_center = 1.0
 epsilon = 0.1
 samples = 100

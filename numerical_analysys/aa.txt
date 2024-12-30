@@ -1,0 +1,4 @@
+Hey man, I have a problem I need a help with. Namely, I generate taylor polynomial for cos function, that has a parameter set to 1.0:
+This I have a polynomial that looks like this: P8(x) = 0.0000134004*x^8 + 0.0000597557*x^7 -0.0015439196*x^6 + 0.0002459702*x^5 + 0.0414120654*x^4 + 0.0001737238*x^3 -0.5000757040*x^2 + 0.0000191642*x + 0.9999978498
+Furthermore, I take a reasonable assumption that the range on which this polynomial is accurate enough is (0.9, 1.1)
+I want to transform this polynomial to make it's domain map to canonical domain of (-1, 1), and further normalize the coefitients to some less extreme values. Then I want to evaluate that newly generated polynomial and see if it's as prescise as the original one. How do I do that in pyhton?

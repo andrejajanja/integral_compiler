@@ -1,5 +1,5 @@
 import pandas as pd
-from numpy import sin, cos, log, exp
+from numpy import sin, cos, log, exp, sinh
 import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
@@ -18,7 +18,7 @@ def plot_csv_values(csv_file):
 
         for x in data['x']:
             std_data.append(
-                log(x)*cos(x)
+                cos(x)*log(x)
             )
 
         # Plot the data
