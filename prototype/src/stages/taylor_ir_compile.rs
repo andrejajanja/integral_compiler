@@ -101,7 +101,7 @@ pub fn generate_ir_from_taylor_sequence(sequence: &[Func]) -> String {
     for (index, elem) in sequence.iter().enumerate() {
         match elem {
             Func::Poly(ts_poly) => {
-                println!("{:?}", &ts_poly.coefs);
+                //println!("{:?}", &ts_poly.coefs);
                 let temp_code: String; let register: String;
                 //println!("{:?}", &ts_poly.coefs);
 

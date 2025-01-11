@@ -1,0 +1,7 @@
+[plot_conf]
+function = "sin(x)*exp(x)"
+poly_power = 8
+precision_center = 0.9
+epsilon = 1.0
+samples = 200
+path="./benchmarks/poly_func.csv"

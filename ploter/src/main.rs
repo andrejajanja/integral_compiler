@@ -6,7 +6,7 @@ use csv;
 
 fn main() {
     println!("Started ploting");
-    let plot_conf = parse_plot_input_file("./ploter_config.toml");
+    let plot_conf = parse_plot_input_file("./test_config.toml");
     let fja = generate_function(
         &plot_conf.function,
         plot_conf.precision_center, 

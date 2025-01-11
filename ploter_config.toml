@@ -1,7 +1,0 @@
-[plot_conf]
-function = "ln(x)"
-poly_power = 8
-precision_center = 1.0
-epsilon = 0.1
-samples = 100
-path="./benchmarks/poly_func.csv"

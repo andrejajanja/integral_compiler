@@ -182,7 +182,7 @@ pub fn generate_function(function: &str, precision_center:f64, max_power: usize)
     optimize_postfix_using_taylor(&mut sequence, precision_center, max_power);
     let ir_code = generate_ir_from_taylor_sequence(&sequence);
 
-    println!("{}", ir_code);
+    //println!("{}", ir_code);
 
     let (mut buffer_data, buffer_len) = generate_binary_from_ir(ir_code);
 

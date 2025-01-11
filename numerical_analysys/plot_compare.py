@@ -16,16 +16,16 @@ def plot_csv_values(csv_file):
         
         std_data = []
 
-        for x in data['x']:
+        for i, x in enumerate(data['x']):
             std_data.append(
-                cos(x)*log(x)
+                abs(data['y'][i]-sin(x)*exp(x))
             )
 
         # Plot the data
         plt.figure(figsize=(10, 6))
-        plt.plot(data['x'], data['y'], marker='o', linestyle='-', color='r')
-        plt.plot(data['x'], std_data, marker='o', linestyle='-', color='g')
-        plt.title('Function values')
+        # plt.plot(data['x'], data['y'], marker='3', linestyle='-', color='r')
+        plt.plot(data['x'], std_data, marker='none', linestyle='-', color='g')
+        plt.legend(["Absolute difference", "glibc"])
         plt.xlabel('x')
         plt.ylabel('y')
         plt.grid(True)
