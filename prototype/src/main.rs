@@ -11,35 +11,7 @@ use crate::stages::custom_ir_compile::generate_custom_function;
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::_rdtsc;
 
-
-// let samples = 1000000;
-
-//     let mut times: Vec<u64> = vec![0; samples];
-
-//     for index in 0..samples {
-//         let ruler = unsafe{_rdtsc()};
-//         let _temp_x = fja(x);
-//         times[index] = unsafe{_rdtsc()} - ruler;
-//     }
-
-//     let mut avg = 0.0;
-//     for sample in &times {
-//         avg += *sample as f64;
-//     }
-//     avg /= samples as f64;
-
-//     let mut devition = 0.0;
-//     for sample in &times {
-//         devition += (*sample as f64 - avg).powi(2);
-//     }
-
-//     devition/=(samples-1) as f64;
-//     devition = devition.sqrt();
-
-//     println!("Approach: Avg {:.4} Dev {:.4}", avg, devition);
-
-
-fn measure_approach() {
+fn main(){
     let x: f64 = 1.0;
     
     let fja = generate_function("sin(x)*exp(x)", 0.9, 8);
@@ -54,31 +26,7 @@ fn measure_approach() {
         avg += (unsafe{_rdtsc()} - ruler) as f64;
     }
     
-    println!("Approach: Avg {:.4}", avg/(samples as f64));
-}
-
-fn measure_glibc() {
-    let x: f64 = 1.0;
-    
-    let fja = generate_custom_function(generate_ir("sin(x)*exp(x)"));
-    
-    let samples = 100_000_000;
-    // let mut times: Vec<u64> = vec![0; samples];
-    let mut avg = 0.0;
-
-    for _ in 0..samples {
-        let ruler = unsafe{_rdtsc()};
-        let _temp_x = fja(x);
-        avg += (unsafe{_rdtsc()} - ruler) as f64;
-    }
-    
-
-    println!("glibc: Avg {:.4}", avg/(samples as f64));
-}
-
-fn main(){
-    measure_approach();
-    measure_glibc();
+    println!("Approach: Avg {:.4}", avg/(samples as f64));    
 }
 
 //     let _ir_code = String::from(r"define double @fja(double %x, double* %array_ptr){

@@ -1,15 +1,8 @@
-# Numerical Integral Approximation Using Compiler Based Approach
+# Real Function Approximation Around a Point with Taylor Polynomials Using Custom-Compiled Machine Code
 
 <img src = "https://logodix.com/logo/1784092.jpg" style = "width: 60%; height: 60%; margin-right: 2rem;">
 
 ## Overview
-
-### How this project came to be?
-I wanted to make a program that would numerically evaluate<br>
-![Integral](https://latex.codecogs.com/png.latex?\color{White}\int_{a}^{b}%20f(x)%20dx%20\quad%20x,%20a,%20b%20\in%20\mathbb{R}\quad%20a%20%3C%20b)
-<br>for ```f(x)``` being **any** function comprised of standard, real, math functions.
-
-Additionaly, I didn't want to rely on any external tools, therefore external compiler (*eg. gcc*) or *JIT* based approach was out of the question. In the end, I concluded I need to write my own **Just In Time Compiler**.
 
 ### How the whole thing works? - **TL;DR**
 1. User provides number of samples and the function string (_eg. f(x)=`sin(x)*exp(x)+ln(x)*tan(x)`_),
@@ -19,16 +12,7 @@ Additionaly, I didn't want to rely on any external tools, therefore external com
 5. Object buffer has the `f(x)` symbol, pointer to the it's location is returned as a result of linking process,
 6. This generated function is then used in unsafe Rust code to numerically approximate the integral using trapezoidal formula.
 
-## Software architecture
-
-Will subsequently add this section
-
-## Custom optimizations used
-
-Will subsequently add this section
-
-## Instalation and supported targets
-Will subsequently add this section
+**White paper explaining the entire project in great detail is in the file taylor_compiler.pdf**
 
 ## License
 

@@ -7,7 +7,6 @@ use std::{
 
 use super::polynomials::TsPoly;
 
-//TODO Add hyperbolic functions to this enum
 #[derive(Debug, Clone, PartialEq)]
 pub enum Func {
     //Values used in subsequent optimization passes
